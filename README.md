@@ -1,6 +1,6 @@
 # MBlade
 
-Decentralized music streaming application that operates entirely offline and locally. Integrates YouTube Music and SoundCloud through local service proxies.
+Decentralized music streaming application that operates locally. Integrates YouTube Music and SoundCloud through local service proxies.
 
 ## Overview
 
