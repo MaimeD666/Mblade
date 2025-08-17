@@ -1,0 +1,295 @@
+/* Стили для компонента AudioVisualizer с поддержкой тем */
+
+.visualizer-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: 30px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.audio-visualizer-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: pointer;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent);
+    transition: transform 0.3s ease;
+}
+
+.audio-visualizer-canvas:hover {
+    transform: scale(1.01);
+}
+
+/* Индикатор текущего типа визуализатора */
+.visualizer-current-type {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: var(--slider-bg);
+    color: var(--text-color);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-family: "Secular One-Regular", Helvetica;
+    font-size: 14px;
+    z-index: 10;
+    backdrop-filter: blur(5px);
+    box-shadow: var(--button-shadow);
+    opacity: 0.8;
+    transition: opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.visualizer-container:hover .visualizer-current-type {
+    opacity: 0.9;
+}
+
+/* Меню выбора типа визуализатора */
+.visualizer-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-bg);
+    backdrop-filter: blur(8px);
+    padding: 16px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 180px;
+    box-shadow: var(--modal-shadow);
+    z-index: 100;
+    animation: menuAppear 0.25s ease-out;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+@keyframes menuAppear {
+    from {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.visualizer-menu-item {
+    background-color: var(--slider-bg);
+    color: var(--text-color);
+    padding: 12px 18px;
+    border-radius: 15px;
+    font-family: "Secular One-Regular", Helvetica;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+    text-align: center;
+    border: 1px solid transparent;
+}
+
+.visualizer-menu-item:hover {
+    background-color: var(--button-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--button-shadow);
+}
+
+.visualizer-menu-item.active {
+    background-color: var(--active-accent);
+    box-shadow: 0 0 15px var(--active-accent);
+    border: 1px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.2);
+}
+
+/* Индикатор ошибки визуализатора */
+.visualizer-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--error-color);
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(var(--secondary-bg-rgb, 108, 34, 126), 0.8);
+    border-radius: 10px;
+    font-family: "Secular One-Regular", Helvetica;
+    font-size: 16px;
+    box-shadow: var(--card-shadow);
+    max-width: 80%;
+    transition: color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Анимации для визуализатора */
+@keyframes pulse-animation {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+
+/* Состояние загрузки визуализатора */
+.visualizer-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(var(--secondary-bg-rgb, 108, 34, 126), 0.3);
+    border-radius: 30px;
+    z-index: 5;
+    transition: background-color 0.3s ease;
+}
+
+.visualizer-loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.3);
+    border-radius: 50%;
+    border-top: 3px solid var(--text-color);
+    animation: visualizer-spinner 1s linear infinite;
+    transition: border-color 0.3s ease;
+}
+
+@keyframes visualizer-spinner {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Стили для слайдера регулировки свечения волн */
+.wave-glow-intensity-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(var(--text-color-rgb, 255, 255, 255), 0.2);
+    border-radius: 3px;
+    outline: none;
+    opacity: 0.8;
+    transition: opacity 0.3s ease, background 0.3s ease;
+}
+
+.wave-glow-intensity-slider:hover {
+    opacity: 1;
+}
+
+.wave-glow-intensity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--progress-knob-color);
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--progress-knob-shadow);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.wave-glow-intensity-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: var(--progress-knob-color);
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--progress-knob-shadow);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Контейнер для настройки свечения волн */
+.wave-glow-control {
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wave-glow-control-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wave-glow-label {
+    color: var(--text-color);
+    font-family: "Secular One-Regular", Helvetica;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.wave-glow-value {
+    color: var(--text-color-secondary);
+    font-family: "Secular One-Regular", Helvetica;
+    font-size: 12px;
+    background-color: rgba(var(--accent-color-rgb, 181, 58, 212), 0.3);
+    padding: 3px 8px;
+    border-radius: 10px;
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Дополнительные стили для подсвечивания волн визуализатора */
+.visualizer-wave-glow {
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+    0% {
+        filter: drop-shadow(0 0 8px rgba(var(--active-accent-rgb, 210, 82, 244), 0.4));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 15px rgba(var(--active-accent-rgb, 210, 82, 244), 0.7));
+    }
+
+    100% {
+        filter: drop-shadow(0 0 8px rgba(var(--active-accent-rgb, 210, 82, 244), 0.4));
+    }
+}
+
+/* Адаптивные стили для разных размеров */
+@media (max-width: 768px) {
+    .visualizer-current-type {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .visualizer-menu {
+        padding: 12px;
+        min-width: 150px;
+    }
+
+    .visualizer-menu-item {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .wave-glow-control {
+        padding: 8px 0;
+    }
+
+    .wave-glow-label {
+        font-size: 12px;
+    }
+
+    .wave-glow-value {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}

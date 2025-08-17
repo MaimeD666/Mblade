@@ -1,0 +1,64 @@
+/* src/index.css */
+:root {
+  /* Основные цвета (будут переопределены темой) */
+  --primary-bg: #58026d;
+  --secondary-bg: #6c227e;
+  --accent-color: #b53ad4;
+  --active-accent: #d252f4;
+  --text-color: #ffffff;
+  --text-color-secondary: rgba(255, 255, 255, 0.7);
+  --text-color-tertiary: rgba(255, 255, 255, 0.5);
+  --error-color: #ff3a3a;
+  --success-color: #4cd964;
+  --warning-color: #ffcc00;
+  --card-bg: #b53ad4;
+  --control-bg: #bd63d4;
+  --button-hover: #d252f4;
+  --background-overlay: rgba(0, 0, 0, 0.7);
+  --modal-bg: #6c227e;
+  --slider-bg: rgba(181, 58, 212, 0.6);
+  --progress-bar-bg: linear-gradient(90deg, #64e0ff, #8afffd);
+  --volume-bar-bg: linear-gradient(0deg, #64e0ff, #8afffd);
+  --love-level-gradient: linear-gradient(135deg, #b53ad4, #e87cff);
+  --accent-gradient: linear-gradient(45deg, #b53ad4, #d252f4);
+  --progress-knob-color: #64e0ff;
+  --card-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  --button-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --modal-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --progress-knob-shadow: 0 0 10px rgba(100, 224, 255, 0.7);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--primary-bg);
+  transition: background-color 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Анимация искр */
+@keyframes sparkle-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8) translate(var(--tx, 0px), var(--ty, 0px));
+    opacity: 0;
+  }
+}

@@ -1,0 +1,12 @@
+flask
+flask-cors
+yt-dlp
+requests
+laion-clap
+librosa
+torch
+torchvision
+torchaudio
+transformers
+numpy
+scikit-learn

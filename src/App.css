@@ -1,0 +1,542 @@
+@import url('https://fonts.googleapis.com/css2?family=Secular+One&display=swap');
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--primary-bg);
+  font-family: 'Secular One', sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+.frame {
+  background-color: var(--primary-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+
+.div {
+  background-color: var(--primary-bg);
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+  transition: all 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.tabs-container {
+  position: absolute;
+  top: 40px;
+  left: 355px;
+  width: 1490px;
+  height: 858px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.app-bottom-player .tabs-container {
+  left: 355px;
+  top: 40px;
+  width: 1441px;
+  height: 858px;
+}
+
+.tab-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  z-index: 1;
+}
+
+.tab-active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  z-index: 3;
+}
+
+.tab-hidden {
+  opacity: 0;
+  transform: translateX(20px) scale(0.95);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tab-leaving {
+  opacity: 0;
+  transform: translateX(-20px) scale(0.95);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tab-entering {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  z-index: 3;
+}
+
+.screen-links {
+  height: 104px;
+  left: 355px;
+  position: absolute;
+  top: 936px;
+  width: 1489px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 5;
+  padding: 0;
+  gap: 15px;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.app-bottom-player .screen-links {
+  height: 858px;
+  left: 235px;
+  top: 40px;
+  width: 104px;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 15px;
+}
+
+.tab-indicator {
+  position: absolute;
+  height: 101px;
+  width: calc(25% - 11.25px);
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 31px;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 1;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.app-bottom-player .tab-indicator {
+  height: 200px;
+  width: 104px;
+  left: 0;
+}
+
+.main-menu-link,
+.search-menu-link,
+.collection-menu-link,
+.settings-menu-link {
+  background-color: var(--accent-color);
+  border-radius: 31px;
+  height: 101px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.app-bottom-player .main-menu-link,
+.app-bottom-player .search-menu-link,
+.app-bottom-player .collection-menu-link,
+.app-bottom-player .settings-menu-link {
+  width: 104px;
+  height: 200px;
+  border-radius: 31px;
+  flex: none;
+}
+
+.active-tab-button {
+  background-color: var(--active-accent);
+  transform: none;
+  box-shadow: none;
+}
+
+.tab-button-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.app-bottom-player .tab-button-content {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tab-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+.app-bottom-player .tab-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.menu-text {
+  color: var(--text-color);
+  font-family: "Secular One-Regular", Helvetica;
+  font-size: 22px;
+  font-weight: 400;
+  transition: color 0.3s ease;
+}
+
+.app-bottom-player .menu-text {
+  font-size: 16px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Анимации при смене режима плеера */
+.div.app-bottom-player .tabs-container,
+.div.app-bottom-player .screen-links {
+  animation: layoutChangeBottom 0.5s ease-out;
+}
+
+.div:not(.app-bottom-player) .tabs-container,
+.div:not(.app-bottom-player) .screen-links {
+  animation: layoutChangeSide 0.5s ease-out;
+}
+
+@keyframes layoutChangeBottom {
+  0% {
+    opacity: 0.7;
+    transform: translateY(20px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes layoutChangeSide {
+  0% {
+    opacity: 0.7;
+    transform: translateX(-20px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Анимация смены режима плеера */
+.div.mode-changing {
+  animation: modeChange 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes modeChange {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media screen and (max-width: 1600px) {
+  .menu-text {
+    font-size: 20px;
+  }
+
+  .tab-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tab-button-content {
+    gap: 10px;
+  }
+
+  .app-bottom-player .menu-text {
+    font-size: 14px;
+  }
+
+  .app-bottom-player .tab-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-bottom-player .tabs-container {
+    width: 1341px;
+  }
+
+  .screen-links {
+    width: 1389px;
+  }
+}
+
+@media screen and (max-width: 1400px) {
+  .menu-text {
+    font-size: 18px;
+  }
+
+  .tab-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .tab-button-content {
+    gap: 8px;
+  }
+
+  .app-bottom-player .menu-text {
+    font-size: 12px;
+  }
+
+  .app-bottom-player .tab-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-bottom-player .tabs-container {
+    width: 1141px;
+  }
+
+  .screen-links {
+    width: 1189px;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .menu-text {
+    display: none;
+  }
+
+  .tab-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .tab-button-content {
+    justify-content: center;
+  }
+
+  .app-bottom-player .menu-text {
+    display: none;
+  }
+
+  .app-bottom-player .tab-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .app-bottom-player .tabs-container {
+    width: 941px;
+  }
+
+  .screen-links {
+    width: 989px;
+  }
+}
+
+/* Горизонтальный режим - обмен местами плеера и навигации */
+html.horizontal-mode .div {
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Контейнер вкладок остается на том же месте */
+html.horizontal-mode .tabs-container {
+  position: absolute;
+  top: 40px;
+  left: 355px;
+  width: 1490px;
+  height: 858px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Навигация перемещается на место плеера (слева) */
+html.horizontal-mode .screen-links {
+  height: 1000px;
+  left: 41px;
+  position: absolute;
+  top: 40px;
+  width: 252px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 5;
+  padding: 0;
+  gap: 15px;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Индикатор вкладки для вертикального режима */
+html.horizontal-mode .tab-indicator {
+  position: absolute;
+  height: 230px;
+  width: 252px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 31px;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 1;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  left: 0 !important;
+}
+
+/* Кнопки навигации в вертикальном режиме */
+html.horizontal-mode .main-menu-link,
+html.horizontal-mode .search-menu-link,
+html.horizontal-mode .collection-menu-link,
+html.horizontal-mode .settings-menu-link {
+  background-color: var(--accent-color);
+  border-radius: 31px;
+  height: 230px;
+  width: 252px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 2;
+  position: relative;
+}
+
+html.horizontal-mode .tab-button-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  flex-direction: column;
+}
+
+html.horizontal-mode .tab-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+html.horizontal-mode .menu-text {
+  color: var(--text-color);
+  font-family: "Secular One-Regular", Helvetica;
+  font-size: 22px;
+  font-weight: 400;
+  transition: color 0.3s ease;
+  text-align: center;
+}
+
+/* Анимация перехода в горизонтальный режим */
+html.horizontal-mode .tabs-container,
+html.horizontal-mode .screen-links {
+  animation: layoutChangeHorizontal 0.5s ease-out;
+}
+
+@keyframes layoutChangeHorizontal {
+  0% {
+    opacity: 0.7;
+    transform: translateY(-20px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Медиа-запросы для горизонтального режима */
+@media screen and (max-width: 1600px) {
+  html.horizontal-mode .tabs-container {
+    width: 1441px;
+  }
+
+  html.horizontal-mode .menu-text {
+    font-size: 20px;
+  }
+
+  html.horizontal-mode .tab-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  html.horizontal-mode .main-menu-link,
+  html.horizontal-mode .search-menu-link,
+  html.horizontal-mode .playlist-search-menu-link,
+  html.horizontal-mode .collection-menu-link,
+  html.horizontal-mode .settings-menu-link {
+    height: 215px;
+  }
+
+  html.horizontal-mode .tab-indicator {
+    height: 215px;
+  }
+}
+
+@media screen and (max-width: 1400px) {
+  html.horizontal-mode .tabs-container {
+    width: 1241px;
+  }
+
+  html.horizontal-mode .menu-text {
+    font-size: 18px;
+  }
+
+  html.horizontal-mode .tab-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  html.horizontal-mode .main-menu-link,
+  html.horizontal-mode .search-menu-link,
+  html.horizontal-mode .playlist-search-menu-link,
+  html.horizontal-mode .collection-menu-link,
+  html.horizontal-mode .settings-menu-link {
+    height: 200px;
+  }
+
+  html.horizontal-mode .tab-indicator {
+    height: 200px;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  html.horizontal-mode .tabs-container {
+    width: 1041px;
+  }
+
+  html.horizontal-mode .menu-text {
+    display: none;
+  }
+
+  html.horizontal-mode .tab-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  html.horizontal-mode .main-menu-link,
+  html.horizontal-mode .search-menu-link,
+  html.horizontal-mode .playlist-search-menu-link,
+  html.horizontal-mode .collection-menu-link,
+  html.horizontal-mode .settings-menu-link {
+    height: 180px;
+  }
+
+  html.horizontal-mode .tab-indicator {
+    height: 180px;
+  }
+}
