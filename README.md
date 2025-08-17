@@ -1,127 +1,113 @@
 # MBlade
 
-Cross-platform music streaming application that integrates YouTube Music and SoundCloud services into a unified interface.
+Decentralized music streaming application that operates entirely offline and locally. Integrates YouTube Music and SoundCloud through local service proxies.
 
 ## Overview
 
-MBlade is a desktop application built with Tauri framework, providing access to multiple music streaming platforms through a single interface. The application features audio visualization, equalizer controls, and customizable theming options.
+MBlade is a desktop music application built with Tauri framework that provides local access to streaming platforms without relying on external servers. All processing, authentication, and data handling occurs locally on the user's machine, ensuring complete privacy and independence from cloud services.
 
-## Features
+## Key Features
 
-- YouTube Music integration with authentication support
-- SoundCloud service integration
-- Real-time audio visualization
-- 10-band equalizer with preset configurations
-- Customizable user interface themes
-- Track analysis and metadata display
-- Playlist management and organization
-- Download functionality for offline listening
-- Full-screen player mode
-- Media session integration
+- **Fully Local Operation**: No external servers or cloud dependencies
+- **Decentralized Architecture**: All data processing occurs on user's machine
+- **YouTube Music Integration**: Local authentication and streaming proxy
+- **SoundCloud Support**: Direct API integration with user-provided credentials
+- **Real-time Audio Visualization**: Advanced frequency analysis and visual effects
+- **10-band Equalizer**: Professional audio processing with preset configurations
+- **Track Analysis**: Local metadata extraction and audio fingerprinting
+- **Playlist Management**: Local storage and organization
+- **Download Functionality**: Local caching for offline playback
+- **Custom Themes**: User-configurable interface styling
+- **Media Controls**: System-level media session integration
 
 ## System Requirements
 
-- Windows 10/11 (x64)
-- Internet connection for streaming services
+- Windows 10/11 (64-bit)
+- 4GB RAM minimum
+- 1GB free disk space
 - Audio output device
+- Internet connection (for streaming content only)
 
 ## Installation
 
-Download the latest installer from the [Releases](https://github.com/MaimeD666/Mblade/releases) section:
+Download the latest release from the [Releases](https://github.com/MaimeD666/Mblade/releases) page:
 
-- `MBlade-Setup-{version}.exe` - Windows installer package
+- `MBlade-Setup-{version}.exe` - Windows installer
 
 ## Technology Stack
 
-- **Frontend**: React 18, JavaScript ES6+
-- **Backend**: Python with Flask framework
+- **Frontend**: React 18.2, JavaScript ES6+
+- **Backend**: Python 3.9+ with Flask
 - **Desktop Framework**: Tauri 2.x (Rust)
 - **Audio Processing**: FFmpeg
-- **Build System**: Cargo (Rust), npm (Node.js)
+- **Build Tools**: Cargo, npm
 
-## Development Setup
+## Development
 
 ### Prerequisites
 
-- Node.js 16+ and npm
+- Node.js 16+
 - Rust 1.77.2+
 - Python 3.9+
 - Git
 
-### Installation
+### Setup
 
-1. Clone the repository:
+1. Clone repository:
 ```bash
 git clone https://github.com/MaimeD666/Mblade.git
 cd Mblade
 ```
 
-2. Install frontend dependencies:
+2. Install dependencies:
 ```bash
 npm install
+cd server && pip install -r requirements.txt && cd ..
 ```
 
-3. Install Python dependencies:
+3. Development mode:
 ```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
+# Terminal 1: Backend server
+cd server && python app.py
 
-4. Install Rust dependencies:
-```bash
-cd src-tauri
-cargo build
-cd ..
-```
-
-### Running in Development Mode
-
-1. Start the Python backend server:
-```bash
-cd server
-python app.py
-```
-
-2. Start the React development server:
-```bash
+# Terminal 2: Frontend
 npm start
+
+# Terminal 3: Tauri app
+cd src-tauri && cargo tauri dev
 ```
 
-3. Start the Tauri application:
-```bash
-cd src-tauri
-cargo tauri dev
-```
-
-### Building for Production
-
+4. Production build:
 ```bash
 npm run build
-cd src-tauri
-cargo tauri build
+cd src-tauri && cargo tauri build
 ```
 
 ## Project Structure
 
 ```
 MBlade/
-├── src/                 # React frontend source code
-├── public/              # Static assets
+├── src/                 # React frontend components
+├── public/              # Static assets and resources
 ├── server/              # Python backend server
-├── src-tauri/           # Tauri application code
-├── electron-app/        # Legacy Electron build (deprecated)
-└── docs/                # Documentation and assets
+├── src-tauri/           # Tauri desktop application
+└── package.json         # Project configuration
 ```
+
+## Configuration
+
+The application requires local configuration for:
+- SoundCloud Client ID (user-provided)
+- YouTube authentication (local OAuth flow)
+- Audio device selection
+- Theme preferences
+
+All configuration is stored locally in the application data directory.
 
 ## License
 
-Copyright © 2025 MaimeD666. All rights reserved.
+Proprietary software. All rights reserved.
 
-## Developer
+## Author
 
-**MaimeD666**
-
-## Contributing
-
-This project is currently in active development. Contribution guidelines will be established in future releases.
+MaimeD666
