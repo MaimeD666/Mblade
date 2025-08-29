@@ -67,7 +67,11 @@ const RecommendationsTab = ({ onPlayTrack, onNextTrack, toggleLike, isTrackLiked
       if (remainingTracks <= 2 && remainingTracks >= 0 && currentIndex >= 0) {
         console.log('[Wave] Auto-loading more tracks...');
         loadMoreWaveTracks();
+      } else {
+        console.log(`[Wave] Auto-load conditions not met: remainingTracks=${remainingTracks}, currentIndex=${currentIndex}`);
       }
+    } else {
+      console.log(`[Wave] Auto-load skipped: isWavePlaying=${isWavePlaying}, hasPlaylist=${!!currentPlaylist}, playlistType=${currentPlaylistType}, loading=${isLoadingMoreTracks}`);
     }
   }, [isWavePlaying, currentTrack?.id, currentPlaylistType]); // УБРАЛИ currentPlaylist?.length и isLoadingMoreTracks
 
@@ -281,14 +285,14 @@ const RecommendationsTab = ({ onPlayTrack, onNextTrack, toggleLike, isTrackLiked
     // Выполняем загрузку в следующем тике, чтобы не блокировать UI
     setTimeout(async () => {
       try {
-        const response = await fetch('/api/yandex-music/wave/next', {
+        const response = await fetch('http://127.0.0.1:5000/api/yandex-music/wave/next', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             count: 5,  // Загружаем 5 треков для волны
-            usedTrackIds: activeWave.tracks.map(track => track.id)  // Передаем уже используемые треки
+            usedTrackIds: currentPlaylist ? currentPlaylist.map(track => track.id) : activeWave.tracks.map(track => track.id)  // Передаем все треки из текущего плейлиста
           })
         });
 
@@ -307,19 +311,20 @@ const RecommendationsTab = ({ onPlayTrack, onNextTrack, toggleLike, isTrackLiked
           setActiveWave(prev => {
             const updatedTracks = [...prev.tracks, ...newTracks];
             
-            // Обновляем текущий плейлист в отдельном микротаске только если нет активного воспроизведения
+            // Обновляем текущий плейлист в отдельном микротаске
             setTimeout(() => {
-              if (isWavePlaying && currentPlaylistType === 'yandex_wave' && currentTrack) {
+              if (currentPlaylistType === 'yandex_wave' && currentTrack) {
                 console.log(`[Wave] Updating active playlist with new tracks: ${updatedTracks.length} total tracks`);
-                // ПРОБЛЕМА: onPlayTrack может прерывать воспроизведение
                 // Используем альтернативный способ обновления плейлиста без вызова onPlayTrack
                 if (window.updatePlaylistWithoutInterruption) {
                   window.updatePlaylistWithoutInterruption(updatedTracks);
+                } else if (window.updateCurrentPlaylist) {
+                  // Альтернативный метод обновления плейлиста
+                  window.updateCurrentPlaylist(updatedTracks);
                 } else {
-                  // Фолбэк: обновляем плейлист только если плеер не активно проигрывает
-                  if (!isPlaying) {
-                    onPlayTrack(currentTrack, 'yandex_wave', updatedTracks);
-                  }
+                  // Фолбэк: всегда обновляем плейлист, но сохраняем текущую позицию
+                  console.log('[Wave] Using fallback playlist update');
+                  onPlayTrack(currentTrack, 'yandex_wave', updatedTracks);
                 }
               }
             }, 0);

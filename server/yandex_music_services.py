@@ -262,9 +262,14 @@ def stream_yandex_track(track_id):
                 response = requests.get(direct_link, headers=headers, stream=True)
                 
                 def generate():
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            yield chunk
+                    try:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                yield chunk
+                    except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ConnectionError, Exception) as e:
+                        print(f"[YM] Stream error for track {track_id}: {e}")
+                        # Не прерываем стриминг, просто логируем ошибку
+                        return
                 
                 response_headers = {
                     'Content-Type': 'audio/mpeg',
@@ -287,8 +292,10 @@ def stream_yandex_track(track_id):
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         yield chunk
-            except Exception as e:
-                print(f"[YM] Streaming error: {e}")
+            except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ConnectionError, Exception) as e:
+                print(f"[YM] Streaming error for track {track_id}: {e}")
+                # Не прерываем стриминг, просто логируем ошибку
+                return
         
         return Response(
             generate(),
@@ -1549,6 +1556,8 @@ def setup_yandex_music_routes(app, settings_file):
                 
         except Exception as e:
             print(f"[YM] Error in next wave tracks: {e}")
+            import traceback
+            traceback.print_exc()
             return jsonify({
                 "success": False,
                 "error": f"Ошибка загрузки треков: {str(e)}"
