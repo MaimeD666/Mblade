@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './App.css';
 import SearchTab from './components/Tabs/SearchTab';
 import MainTab from './components/Tabs/MainTab';
+import RecommendationsTab from './components/Tabs/RecommendationsTab';
 import CollectionTab from './components/Tabs/CollectionTab';
 import SettingsTab from './components/Tabs/SettingsTab';
+// Импортируем плееры из папки components. Пути ориентированы на структуру вашего проекта.
 import MusicPlayer from './components/MusicPlayer';
-import SoundCloudClientIdModal from './components/SoundCloudClientIdModal';
+import HorizontalPlayer from './components/HorizontalPlayer';
 import YouTubeAuthModal from './components/YouTubeAuthModal';
 import WidgetManager from './services/WidgetManager';
 import NotificationSystem, { getNotificationManager } from './components/NotificationSystem';
@@ -15,8 +17,6 @@ import {
   getStreamUrl,
   getFastStreamUrl,
   loadPlaylistsFromServer,
-  getSoundCloudClientId,
-  saveSoundCloudClientId,
   API_BASE_URL,
   setCurrentTrack,
   saveTrack,
@@ -27,7 +27,8 @@ import {
   clearCache,
   preloadAdjacentTracks,
   handlePlaybackError,
-  checkSoundCloudTrackAvailability
+  checkSoundCloudTrackAvailability,
+  yandexWaveFeedback
 } from './services/api';
 import mediaSessionService from './services/mediaSession';
 
@@ -280,8 +281,6 @@ export const savePlaylistsToServer = async (playlists, likedTracks) => {
 };
 
 function App() {
-  const [showClientIdModal, setShowClientIdModal] = useState(false);
-  const [hasClientId, setHasClientId] = useState(true);
   const [showYouTubeAuthModal, setShowYouTubeAuthModal] = useState(false);
   const [hasYouTubeAuth, setHasYouTubeAuth] = useState(true);
 
@@ -290,8 +289,10 @@ function App() {
   const [currentTrack, setCurrentTrackState] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState('main');
+  const [isMainRecommendations, setIsMainRecommendations] = useState(false);
   const [previousTab, setPreviousTab] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isMainTransitioning, setIsMainTransitioning] = useState(false);
   const [currentScale, setCurrentScale] = useState(1);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -299,7 +300,15 @@ function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [wasSearched, setWasSearched] = useState(false);
 
-  const [likedTracks, setLikedTracks] = useState([]);
+  const [likedTracks, setLikedTracks] = useState(() => {
+    try {
+      const saved = localStorage.getItem('likedTracks');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Error loading liked tracks:', error);
+      return [];
+    }
+  });
   const [playlists, setPlaylists] = useState([]);
   const [initLoaded, setInitLoaded] = useState(false);
 
@@ -318,7 +327,18 @@ function App() {
   const [shuffleMode, setShuffleMode] = useState(false);
   const [originalQueue, setOriginalQueue] = useState([]);
   const [customQueueActive, setCustomQueueActive] = useState(false);
-  const [isHorizontalMode, setIsHorizontalMode] = useState(false);
+  // Состояние режима плеера: по умолчанию горизонтальный, если значение отсутствует в localStorage
+  const [isHorizontalMode, setIsHorizontalMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem('horizontalMode');
+      if (stored === null) {
+        return true;
+      }
+      return stored === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
 
   const [visualizerType, setVisualizerType] = useState(localStorage.getItem('visualizerType') || 'wave_centered');
   const [visibleWidgets, setVisibleWidgets] = useState(WidgetManager.getInitialState());
@@ -334,26 +354,80 @@ function App() {
   // Эквалайзер
   const [isEqualizerOpen, setIsEqualizerOpen] = useState(false);
 
+  // Модальные окна горизонтального плеера
+  const [showHorizontalPlaylistModal, setShowHorizontalPlaylistModal] = useState(false);
+  const [showHorizontalOptionsModal, setShowHorizontalOptionsModal] = useState(false);
+  const [showHorizontalShareModal, setShowHorizontalShareModal] = useState(false);
+  const [horizontalShareUrl, setHorizontalShareUrl] = useState('');
+  const [horizontalCopySuccess, setHorizontalCopySuccess] = useState(false);
+
   const appRef = useRef(null);
   const audioRef = useRef(null);
   const syncTimeoutRef = useRef(null);
 
+  // Helper function to send Yandex Music feedback
+  const sendYandexMusicFeedback = useCallback(async (track, feedbackType, playedSeconds = null, triggerNext = false) => {
+    if (!track || track.platform !== 'yandex_music' || !track.queueSource?.includes('yandex_wave')) {
+      return;
+    }
+    
+    try {
+      const trackDuration = track.duration || null;
+      await yandexWaveFeedback(track.id, feedbackType, playedSeconds, trackDuration);
+      if (playedSeconds !== null) {
+        console.log(`[YM] Sent ${feedbackType} feedback for track ${track.id}, played ${playedSeconds.toFixed(1)}s`);
+      } else {
+        console.log(`[YM] Sent ${feedbackType} feedback for track ${track.id}`);
+      }
+      
+      // Backoff delay после успешного feedback (300-600мс)
+      const backoffDelay = 300 + Math.random() * 300;
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      
+      // Trigger loadMoreWaveTracks if requested
+      if (triggerNext && window.loadMoreWaveTracks) {
+        console.log(`[YM] Triggering loadMoreWaveTracks after ${feedbackType} feedback with ${backoffDelay.toFixed(0)}ms backoff`);
+        setTimeout(() => window.loadMoreWaveTracks(), 50); // Small additional delay to ensure UI is ready
+      }
+      
+    } catch (error) {
+      console.warn(`[YM] Failed to send ${feedbackType} feedback for track ${track.id}:`, error);
+    }
+  }, []);
+
   // Функции для управления воспроизведением через Media Session
+  const playTrack = useCallback(() => {
+    if (audioRef.current && !isPlaying) {
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+        // Обновляем MediaSession после успешного воспроизведения
+        setTimeout(() => mediaSessionService.updatePlaybackState(true), 0);
+      }).catch(err => {
+        console.error('Ошибка воспроизведения из MediaSession:', err);
+        setIsPlaying(false);
+        mediaSessionService.updatePlaybackState(false);
+      });
+    }
+  }, [isPlaying]);
+
+  const pauseTrack = useCallback(() => {
+    if (audioRef.current && isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      // Обновляем MediaSession после паузы
+      setTimeout(() => mediaSessionService.updatePlaybackState(false), 0);
+    }
+  }, [isPlaying]);
+
   const togglePlayPause = useCallback(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-        mediaSessionService.updatePlaybackState(false);
+        pauseTrack();
       } else {
-        audioRef.current.play().catch(err => {
-          console.error('Ошибка воспроизведения:', err);
-        });
-        setIsPlaying(true);
-        mediaSessionService.updatePlaybackState(true);
+        playTrack();
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, playTrack, pauseTrack]);
 
   const handleMediaSessionSeek = useCallback((offset) => {
     if (audioRef.current) {
@@ -384,6 +458,44 @@ function App() {
   useEffect(() => {
     WidgetManager.saveState(visibleWidgets);
   }, [visibleWidgets]);
+
+  // Сохранение состояния рекомендаций в localStorage
+  useEffect(() => {
+    safeLocalStorageSet('isMainRecommendations', isMainRecommendations);
+  }, [isMainRecommendations]);
+
+  // Сохранение лайкнутых треков в localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
+    } catch (error) {
+      console.error('Error saving liked tracks:', error);
+    }
+  }, [likedTracks]);
+
+  // Загрузка состояния рекомендаций при инициализации
+  useEffect(() => {
+    const savedRecommendationsState = safeLocalStorageGet('isMainRecommendations', false);
+    setIsMainRecommendations(savedRecommendationsState);
+  }, []);
+
+  // Функция для безопасного обновления плейлиста без прерывания воспроизведения
+  useEffect(() => {
+    window.updatePlaylistWithoutInterruption = (newTracks) => {
+      console.log(`[App] Updating playlist without interruption: ${newTracks.length} tracks`);
+      // Обновляем только queue без изменения currentTrack или позиции воспроизведения
+      setQueue(newTracks);
+    };
+
+    // Экспорт функции togglePlayPause для использования кнопкой "Моя волна"
+    window.togglePlayPause = togglePlayPause;
+
+    // Очистка при размонтировании компонента
+    return () => {
+      window.updatePlaylistWithoutInterruption = null;
+      window.togglePlayPause = null;
+    };
+  }, [togglePlayPause]);
 
   const toggleWidgetVisibility = (widgetId) => {
     setVisibleWidgets(prev => WidgetManager.toggleWidget(prev, widgetId));
@@ -670,6 +782,8 @@ function App() {
           a.onplaying = () => {
             setIsTrackLoading(false);
             setIsPlaying(true);
+            // Send trackStarted feedback for Yandex Music wave tracks
+            sendYandexMusicFeedback(newTrack, 'trackStarted');
           };
           a.onerror = (e) => {
             console.error(`[Audio] error: ${newTrack.id}`, e);
@@ -698,6 +812,8 @@ function App() {
                 .then(() => {
                   setIsPlaying(true);
                   setIsTrackLoading(false);
+                  // Send trackStarted feedback for Yandex Music wave tracks
+                  sendYandexMusicFeedback(newTrack, 'trackStarted');
                   setTimeout(
                     () =>
                       preloadAdjacentTracks(newTrack, newQueue, startIndex).catch(
@@ -926,51 +1042,8 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
 
     setTimeout(() => loadDataWithRetry(), 1500);
 
-    const checkInitialSetup = async () => {
-      try {
-        const clientIdResult = await getSoundCloudClientId();
-        setHasClientId(clientIdResult.is_set);
-        
-        const youtubeAuthStatus = await checkYouTubeAuthStatus();
-        setHasYouTubeAuth(youtubeAuthStatus);
-
-        if (!clientIdResult.is_set) {
-          setShowClientIdModal(true);
-        } else if (!youtubeAuthStatus) {
-          setShowYouTubeAuthModal(true);
-        }
-      } catch (error) {
-        console.error('Ошибка при проверке начальной настройки:', error);
-        setHasClientId(false);
-        setHasYouTubeAuth(false);
-        setShowClientIdModal(true);
-      }
-    };
-
-    checkInitialSetup();
   }, []);
 
-  const handleClientIdSubmit = async (clientId) => {
-    try {
-      const result = await saveSoundCloudClientId(clientId);
-      if (result.success) {
-        setHasClientId(true);
-        setShowClientIdModal(false);
-        
-        const youtubeAuthStatus = await checkYouTubeAuthStatus();
-        if (!youtubeAuthStatus) {
-          setShowYouTubeAuthModal(true);
-        }
-        
-        return true;
-      } else {
-        throw new Error(result.error || 'Не удалось сохранить Client ID');
-      }
-    } catch (error) {
-      console.error('Ошибка при сохранении Client ID:', error);
-      throw error;
-    }
-  };
 
   const handleYouTubeAuthSuccess = () => {
     setHasYouTubeAuth(true);
@@ -1065,8 +1138,35 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
     
     window.addEventListener('keydown', handleKeyDown);
     
+    // Обработчик события storage для реакции на изменение режима плеера
+    const handleStorageChange = (e) => {
+      if (e.key === 'horizontalMode' || e.type === 'storage') {
+        const storedValue = localStorage.getItem('horizontalMode');
+        const newHorizontalMode = storedValue === 'true';
+        setIsHorizontalMode(newHorizontalMode);
+        
+        if (newHorizontalMode) {
+          document.documentElement.classList.add('horizontal-mode');
+        } else {
+          document.documentElement.classList.remove('horizontal-mode');
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     // Инициализация горизонтального режима
-    const horizontalMode = localStorage.getItem('horizontalMode') === 'true';
+    // Определяем режим по умолчанию: если в localStorage нет записи,
+    // то считаем, что режим должен быть горизонтальным (true).
+    let storedHorizontal = localStorage.getItem('horizontalMode');
+    let horizontalMode;
+    if (storedHorizontal === null) {
+      // При первом запуске значение отсутствует, задаём горизонтальный режим.
+      horizontalMode = true;
+      localStorage.setItem('horizontalMode', 'true');
+    } else {
+      horizontalMode = storedHorizontal === 'true';
+    }
     setIsHorizontalMode(horizontalMode);
     if (horizontalMode) {
       document.documentElement.classList.add('horizontal-mode');
@@ -1075,6 +1175,7 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
     return () => {
       window.removeEventListener('resize', updateScale);
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -1103,6 +1204,11 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
     } else if (source === 'favorites' && sourceData && sourceData.length) {
       newQueue = [...sourceData];
       startIndex = newQueue.findIndex(t => t.id === track.id && t.platform === track.platform);
+    } else if (source === 'yandex_wave' && sourceData && sourceData.length) {
+      console.log(`[Queue] Creating Yandex Wave queue with ${sourceData.length} tracks`);
+      newQueue = [...sourceData];
+      startIndex = newQueue.findIndex(t => t.id === track.id && t.platform === track.platform);
+      console.log(`[Queue] Wave track index: ${startIndex}, track: ${track.title}`);
     } else {
       newQueue = [track];
       startIndex = 0;
@@ -1127,6 +1233,12 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
   }, [queue, customQueueActive, shuffleMode]);
 
   const playNextTrack = useCallback(async () => {
+    // Send trackFinished feedback for current track before switching
+    if (currentTrack && audioRef.current) {
+      const playedSeconds = audioRef.current.currentTime || 0;
+      sendYandexMusicFeedback(currentTrack, 'trackFinished', playedSeconds, true); // triggerNext = true
+    }
+    
     if (queue.length === 0) {
       setIsPlaying(false);
       if (audioRef.current) {
@@ -1181,10 +1293,16 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
-  }, [queue, queueIndex, queueSource, repeatMode, handlePlayTrack, customQueueActive, originalQueue, currentTrack]);
+  }, [queue, queueIndex, queueSource, repeatMode, handlePlayTrack, customQueueActive, originalQueue, currentTrack, sendYandexMusicFeedback]);
 
   const playPreviousTrack = useCallback(async () => {
     if (queue.length > 0 && queueIndex > 0) {
+      // Send trackFinished feedback for current track before switching
+      if (currentTrack && audioRef.current) {
+        const playedSeconds = audioRef.current.currentTime || 0;
+        sendYandexMusicFeedback(currentTrack, 'trackFinished', playedSeconds, true); // triggerNext = true
+      }
+      
       const prevIndex = queueIndex - 1;
       const candidateTrack = queue[prevIndex];
       setQueueIndex(prevIndex);
@@ -1198,13 +1316,13 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
         });
       }
     }
-  }, [queue, queueIndex, queueSource, handlePlayTrack]);
+  }, [queue, queueIndex, queueSource, handlePlayTrack, currentTrack, sendYandexMusicFeedback]);
 
   // Настройка Media Session API после определения всех callback функций
   useEffect(() => {
     mediaSessionService.setCallbacks({
-      play: togglePlayPause,
-      pause: togglePlayPause,
+      play: playTrack,
+      pause: pauseTrack,
       nexttrack: playNextTrack,
       previoustrack: playPreviousTrack,
       stop: () => {
@@ -1212,13 +1330,14 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
           setIsPlaying(false);
+          mediaSessionService.updatePlaybackState(false);
         }
       },
       seekbackward: handleMediaSessionSeek,
       seekforward: (offset) => handleMediaSessionSeek(offset),
       seekto: handleMediaSessionSeekTo
     });
-  }, [togglePlayPause, playNextTrack, playPreviousTrack, handleMediaSessionSeek, handleMediaSessionSeekTo]);
+  }, [playTrack, pauseTrack, playNextTrack, playPreviousTrack, handleMediaSessionSeek, handleMediaSessionSeekTo]);
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -1253,14 +1372,22 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
         });
         // Обновляем позицию воспроизведения для Media Session
         mediaSessionService.updatePositionState(audioElement.duration, 1.0, audioElement.currentTime);
+        
+        // Периодическая синхронизация состояния для предотвращения рассинхрона
+        if (Math.floor(audioElement.currentTime) % 10 === 0) {
+          mediaSessionService.syncPlaybackState(audioElement);
+        }
       }
       
     };
 
     const onPlaying = () => {
       setIsTrackLoading(false);
-      setIsPlaying(true);
-      mediaSessionService.updatePlaybackState(true);
+      if (!isPlaying) {
+        setIsPlaying(true);
+        // Обновляем MediaSession только если состояние изменилось
+        setTimeout(() => mediaSessionService.updatePlaybackState(true), 0);
+      }
     };
 
     const onWaiting = () => {
@@ -1268,8 +1395,11 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
     };
 
     const onPause = () => {
-      setIsPlaying(false);
-      mediaSessionService.updatePlaybackState(false);
+      if (isPlaying) {
+        setIsPlaying(false);
+        // Обновляем MediaSession только если состояние изменилось
+        setTimeout(() => mediaSessionService.updatePlaybackState(false), 0);
+      }
     };
 
     const onCanPlay = () => {
@@ -1278,8 +1408,11 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
         audioElement.play().catch(err => {
           console.warn('Ошибка автовоспроизведения после canplay:', err);
           setIsPlaying(false);
+          mediaSessionService.updatePlaybackState(false);
         });
       }
+      // Синхронизация при готовности к воспроизведению
+      mediaSessionService.syncPlaybackState(audioElement);
     };
 
     const onEnded = () => {
@@ -1351,6 +1484,11 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
         ...(results.soundcloud || []).map(item => ({
           ...item,
           platform: 'soundcloud',
+          streamUrl: getStreamUrl(item)
+        })),
+        ...(results.yandex_music || []).map(item => ({
+          ...item,
+          platform: 'yandex_music',
           streamUrl: getStreamUrl(item)
         })),
         ...(results.vkmusic || []).map(item => ({
@@ -1540,6 +1678,70 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
     savePlaylistsToServer(updatedPlaylists, likedTracks);
   };
 
+  // Функции для горизонтального плеера
+  const handleHorizontalShareTrack = async () => {
+    if (!currentTrack) return;
+
+    let url = '';
+    if (currentTrack.platform === 'youtube') {
+      url = `https://www.youtube.com/watch?v=${currentTrack.id}`;
+    } else if (currentTrack.platform === 'soundcloud') {
+      url = currentTrack.url || '';
+
+      if (!url) {
+        try {
+          const response = await fetch(`http://localhost:5000/api/soundcloud/get-track-info?id=${currentTrack.id}`);
+          if (response.ok) {
+            const trackInfo = await response.json();
+            url = trackInfo.permalink_url || '';
+          }
+        } catch (error) {
+          console.error('Ошибка получения информации о треке:', error);
+        }
+      }
+
+      if (!url) {
+        alert('Не удалось получить ссылку на этот трек');
+        return;
+      }
+    } else if (currentTrack.url) {
+      url = currentTrack.url;
+    }
+
+    if (!url) {
+      alert('Ссылка на этот трек недоступна');
+      return;
+    }
+
+    setHorizontalShareUrl(url);
+
+    if (navigator.share && url) {
+      navigator.share({
+        title: currentTrack.title,
+        text: `Послушай "${currentTrack.title}" от ${currentTrack.uploader}`,
+        url: url
+      })
+        .then(() => console.log('Контент успешно отправлен'))
+        .catch((error) => {
+          console.log('Ошибка отправки:', error);
+          setShowHorizontalShareModal(true);
+        });
+    } else {
+      setShowHorizontalShareModal(true);
+    }
+  };
+
+  const copyHorizontalToClipboard = () => {
+    navigator.clipboard.writeText(horizontalShareUrl)
+      .then(() => {
+        setHorizontalCopySuccess(true);
+        setTimeout(() => setHorizontalCopySuccess(false), 2000);
+      })
+      .catch(err => {
+        console.error('Не удалось скопировать текст: ', err);
+      });
+  };
+
   const getTabClassName = (tabName) => {
     if (tabName === activeTab && !isTransitioning) {
       return 'tab-content tab-active';
@@ -1559,31 +1761,62 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
     <div className="frame">
       <div className="div" ref={appRef}>
         <NotificationSystem />
-        <MusicPlayer
-          currentTrack={currentTrack}
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-          audioRef={audioRef}
-          isLiked={isTrackLiked(currentTrack)}
-          toggleLike={() => toggleLike(currentTrack)}
-          playlists={playlists}
-          createPlaylist={createPlaylist}
-          addTrackToPlaylists={addTrackToPlaylists}
-          onPrevTrack={playPreviousTrack}
-          onNextTrack={playNextTrack}
-          hasNext={queue.length > 0 && queueIndex < queue.length - 1}
-          hasPrev={queue.length > 0 && queueIndex > 0}
-          isLoading={isTrackLoading}
-          repeatMode={repeatMode}
-          setRepeatMode={setRepeatMode}
-          shuffleMode={shuffleMode}
-          toggleShuffleMode={toggleShuffleMode}
-          isCustomQueueActive={customQueueActive}
-          clearCustomQueue={clearCustomQueue}
-          onSyncTrack={handleSyncTrack}
-          onSyncPlayback={handleSyncPlayback}
-          onOpenEqualizer={() => setIsEqualizerOpen(true)}
-        />
+        {isHorizontalMode ? (
+          <HorizontalPlayer
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            audioRef={audioRef}
+            isLiked={isTrackLiked(currentTrack)}
+            toggleLike={() => toggleLike(currentTrack)}
+            playlists={playlists}
+            createPlaylist={createPlaylist}
+            addTrackToPlaylists={addTrackToPlaylists}
+            onPrevTrack={playPreviousTrack}
+            onNextTrack={playNextTrack}
+            hasNext={queue.length > 0 && queueIndex < queue.length - 1}
+            hasPrev={queue.length > 0 && queueIndex > 0}
+            isLoading={isTrackLoading}
+            repeatMode={repeatMode}
+            setRepeatMode={setRepeatMode}
+            shuffleMode={shuffleMode}
+            toggleShuffleMode={toggleShuffleMode}
+            isCustomQueueActive={customQueueActive}
+            clearCustomQueue={clearCustomQueue}
+            onSyncTrack={handleSyncTrack}
+            onSyncPlayback={handleSyncPlayback}
+            onOpenEqualizer={() => setIsEqualizerOpen(true)}
+            onShowPlaylistModal={() => setShowHorizontalPlaylistModal(true)}
+            onShowOptionsModal={() => setShowHorizontalOptionsModal(true)}
+            onShowShareModal={() => setShowHorizontalShareModal(true)}
+          />
+        ) : (
+          <MusicPlayer
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            audioRef={audioRef}
+            isLiked={isTrackLiked(currentTrack)}
+            toggleLike={() => toggleLike(currentTrack)}
+            playlists={playlists}
+            createPlaylist={createPlaylist}
+            addTrackToPlaylists={addTrackToPlaylists}
+            onPrevTrack={playPreviousTrack}
+            onNextTrack={playNextTrack}
+            hasNext={queue.length > 0 && queueIndex < queue.length - 1}
+            hasPrev={queue.length > 0 && queueIndex > 0}
+            isLoading={isTrackLoading}
+            repeatMode={repeatMode}
+            setRepeatMode={setRepeatMode}
+            shuffleMode={shuffleMode}
+            toggleShuffleMode={toggleShuffleMode}
+            isCustomQueueActive={customQueueActive}
+            clearCustomQueue={clearCustomQueue}
+            onSyncTrack={handleSyncTrack}
+            onSyncPlayback={handleSyncPlayback}
+            onOpenEqualizer={() => setIsEqualizerOpen(true)}
+          />
+        )}
 
         <Equalizer
           isOpen={isEqualizerOpen}
@@ -1620,17 +1853,60 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
 
 
           <div className={getTabClassName('main')}>
-            <MainTab
-              onPlayTrack={handlePlayTrack}
-              currentTrack={currentTrack}
-              isPlaying={isPlaying}
-              audioRef={audioRef}
-              recentTracks={searchResults.length > 0 ? searchResults : likedTracks}
-              visualizerType={visualizerType}
-              setVisualizerType={setVisualizerType}
-              visibleWidgets={visibleWidgets}
-              toggleWidgetVisibility={toggleWidgetVisibility}
-            />
+            <div 
+              className={`main-content-wrapper ${isMainTransitioning ? 'transitioning' : ''}`}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                overflow: 'hidden'
+              }}
+            >
+              <div 
+                className={`main-tab-container ${isMainRecommendations ? 'slide-out-left' : 'slide-in-left'}`}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  top: 0,
+                  left: 0
+                }}
+              >
+                <MainTab
+                  onPlayTrack={handlePlayTrack}
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  audioRef={audioRef}
+                  recentTracks={searchResults.length > 0 ? searchResults : likedTracks}
+                  visualizerType={visualizerType}
+                  setVisualizerType={setVisualizerType}
+                  visibleWidgets={visibleWidgets}
+                  toggleWidgetVisibility={toggleWidgetVisibility}
+                />
+              </div>
+              
+              <div 
+                className={`recommendations-tab-container ${isMainRecommendations ? 'slide-in-right' : 'slide-out-right'}`}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  top: 0,
+                  left: 0
+                }}
+              >
+                <RecommendationsTab 
+                  onPlayTrack={handlePlayTrack}
+                  onNextTrack={playNextTrack}
+                  toggleLike={toggleLike}
+                  isTrackLiked={isTrackLiked}
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  currentPlaylist={queue}
+                  currentPlaylistType={queueSource}
+                />
+              </div>
+            </div>
           </div>
 
           <div className={getTabClassName('collection')}>
@@ -1694,38 +1970,90 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
         <div className="screen-links">
           <div
             className="tab-indicator"
-            style={isHorizontalMode ? {
-              // Вертикальная навигация в горизонтальном режиме
-              left: '0',
-              top: activeTab === 'main' ? '0' :
+            style={{
+              // РЕАЛЬНО ПРАВИЛЬНАЯ логика:
+              // ВЕРТИКАЛЬНЫЙ режим плеера = кнопки навигации ГОРИЗОНТАЛЬНО = индикатор ездит по LEFT
+              // ГОРИЗОНТАЛЬНЫЙ режим плеера = кнопки навигации ВЕРТИКАЛЬНО = индикатор ездит по TOP
+              left: !isHorizontalMode ? (
+                activeTab === 'main' ? '0px' :
                 activeTab === 'search' ? 'calc(25% + 3.75px)' :
                   activeTab === 'collection' ? 'calc(50% + 7.5px)' :
                     'calc(75% + 11.25px)'
-            } : {
-              // Горизонтальная навигация в обычном режиме
-              left: activeTab === 'main' ? '0' :
-                activeTab === 'search' ? 'calc(25% + 3.75px)' :
-                  activeTab === 'collection' ? 'calc(50% + 7.5px)' :
-                    'calc(75% + 11.25px)',
-              top: '0'
+              ) : '0',
+              top: !isHorizontalMode ? '0' : (
+                activeTab === 'main' ? '0px' :
+                activeTab === 'search' ? '256px' :
+                  activeTab === 'collection' ? '513px' :
+                    '770px'
+              ),
+              transform: 'none'
             }}
           />
 
           <div
             className={getNavButtonClass('main')}
-            onClick={() => setActiveTab('main')}
+            onClick={() => {
+              if (activeTab === 'main') {
+                // На главной вкладке - переключаем режимы
+                setIsMainTransitioning(true);
+                setTimeout(() => {
+                  setIsMainRecommendations(!isMainRecommendations);
+                  setTimeout(() => {
+                    setIsMainTransitioning(false);
+                  }, 50);
+                }, 200);
+              } else {
+                // С других вкладок - просто переходим на главную БЕЗ изменения режима
+                setActiveTab('main');
+                // НЕ трогаем isMainRecommendations - оставляем как было
+              }
+            }}
           >
             <div className="tab-button-content">
-              <svg className="tab-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-              </svg>
-              <span className="menu-text">Главная</span>
+              {activeTab !== 'main' ? (
+                /* НЕ на главной - показываем текущий активный режим */
+                isMainRecommendations ? (
+                  <>
+                    <svg className="tab-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <span className="menu-text">Рекомендации</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="tab-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span className="menu-text">Главная</span>
+                  </>
+                )
+              ) : (
+                /* НА главной - показываем кнопку для переключения (противоположный режим) */
+                isMainRecommendations ? (
+                  <>
+                    <svg className="tab-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span className="menu-text">Главная</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="tab-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <span className="menu-text">Рекомендации</span>
+                  </>
+                )
+              )}
             </div>
           </div>
 
           <div
             className={getNavButtonClass('search')}
-            onClick={() => setActiveTab('search')}
+            onClick={() => {
+              setActiveTab('search');
+              // Сброс состояния рекомендаций при переходе на другую вкладку не нужен, сохраняем
+            }}
           >
             <div className="tab-button-content">
               <svg className="tab-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -1770,17 +2098,246 @@ const handleSyncPlayback = (syncIsPlaying, syncCurrentTime) => {
           preload="auto"
         />
 
-        <SoundCloudClientIdModal
-          isOpen={showClientIdModal}
-          onSubmit={handleClientIdSubmit}
-          onCancel={() => {}}
-        />
 
         <YouTubeAuthModal
           isOpen={showYouTubeAuthModal}
           onSuccess={handleYouTubeAuthSuccess}
           onError={handleYouTubeAuthError}
         />
+
+        {/* Модальные окна для горизонтального плеера */}
+        {showHorizontalPlaylistModal && currentTrack && (
+          <div className="modal-overlay add-to-playlist-modal">
+            <div className="modal-content">
+              <h3 className="modal-title">Добавить трек в плейлист</h3>
+              <div className="create-new-playlist-option" onClick={() => {
+                const name = prompt('Название плейлиста:');
+                if (name?.trim()) {
+                  createPlaylist(name, currentTrack);
+                  setShowHorizontalPlaylistModal(false);
+                }
+              }}>
+                <div className="create-new-playlist-icon">+</div>
+                <div className="create-new-playlist-text">Создать новый плейлист</div>
+              </div>
+
+              {playlists.length > 0 ? (
+                <div className="playlist-selection-list">
+                  {playlists.map(playlist => (
+                    <div
+                      key={playlist.id}
+                      className="playlist-selection-item"
+                      onClick={() => {
+                        addTrackToPlaylists(currentTrack, [playlist.id]);
+                        setShowHorizontalPlaylistModal(false);
+                      }}
+                    >
+                      <div className="playlist-selection-checkbox" />
+                      <div className="playlist-selection-name">{playlist.name}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="modal-text">У вас еще нет плейлистов. Создайте новый!</p>
+              )}
+
+              <div className="modal-buttons">
+                <div className="modal-button modal-button-cancel" onClick={() => setShowHorizontalPlaylistModal(false)}>
+                  Отмена
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showHorizontalOptionsModal && (
+          <div className="modal-overlay options-modal">
+            <div className="modal-content">
+              <h3 className="modal-title">Дополнительные опции</h3>
+
+              <div className="options-list">
+                <div
+                  className="option-item"
+                  onClick={() => {
+                    handleHorizontalShareTrack();
+                    setShowHorizontalOptionsModal(false);
+                  }}
+                >
+                  <div className="option-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" fill="#64e0ff" />
+                    </svg>
+                  </div>
+                  <div className="option-text">
+                    Поделиться треком
+                  </div>
+                </div>
+
+                <div
+                  className="option-item"
+                  onClick={() => {
+                    setIsEqualizerOpen(true);
+                    setShowHorizontalOptionsModal(false);
+                  }}
+                >
+                  <div className="option-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 6h2v8H7V6zm4-3h2v14h-2V3zm4 6h2v8h-2v-8z" fill="#64e0ff" />
+                    </svg>
+                  </div>
+                  <div className="option-text">
+                    Эквалайзер
+                  </div>
+                </div>
+
+                {customQueueActive && (
+                  <div
+                    className="option-item"
+                    onClick={() => {
+                      clearCustomQueue();
+                      setShowHorizontalOptionsModal(false);
+                    }}
+                  >
+                    <div className="option-icon">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 10h11v2H3v-2zm0-4h11v2H3V6zm0 8h7v2H3v-2zm13-1v8l6-4-6-4z" fill="#64e0ff" />
+                      </svg>
+                    </div>
+                    <div className="option-text">
+                      Вернуться к обычной очереди
+                    </div>
+                  </div>
+                )}
+
+                <div className="option-section-title">Режим повтора</div>
+
+                <div
+                  className={`option-item ${repeatMode === REPEAT_MODES.NONE ? 'active' : ''}`}
+                  onClick={() => {
+                    setRepeatMode(REPEAT_MODES.NONE);
+                    setShowHorizontalOptionsModal(false);
+                  }}
+                >
+                  <div className="option-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" fill={repeatMode === REPEAT_MODES.NONE ? "#64e0ff" : "white"} />
+                    </svg>
+                  </div>
+                  <div className="option-text">Без повтора</div>
+                </div>
+
+                <div
+                  className={`option-item ${repeatMode === REPEAT_MODES.TRACK ? 'active' : ''}`}
+                  onClick={() => {
+                    setRepeatMode(REPEAT_MODES.TRACK);
+                    setShowHorizontalOptionsModal(false);
+                  }}
+                >
+                  <div className="option-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" fill={repeatMode === REPEAT_MODES.TRACK ? "#64e0ff" : "white"} />
+                      <circle cx="18" cy="18" r="6" fill="rgba(0,0,0,0.5)" />
+                      <text x="18" y="21" textAnchor="middle" fontSize="8" fill={repeatMode === REPEAT_MODES.TRACK ? "#64e0ff" : "white"}>1</text>
+                    </svg>
+                  </div>
+                  <div className="option-text">Повтор трека</div>
+                </div>
+
+                <div
+                  className={`option-item ${repeatMode === REPEAT_MODES.PLAYLIST ? 'active' : ''}`}
+                  onClick={() => {
+                    setRepeatMode(REPEAT_MODES.PLAYLIST);
+                    setShowHorizontalOptionsModal(false);
+                  }}
+                >
+                  <div className="option-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" fill={repeatMode === REPEAT_MODES.PLAYLIST ? "#64e0ff" : "white"} />
+                      <path d="M14 12l-3 0v-2l-4 3 4 3v-2h3v-2z" fill={repeatMode === REPEAT_MODES.PLAYLIST ? "#64e0ff" : "white"} fillOpacity="0.8" />
+                    </svg>
+                  </div>
+                  <div className="option-text">Повтор плейлиста</div>
+                </div>
+              </div>
+
+              <div className="modal-buttons">
+                <div className="modal-button modal-button-confirm" onClick={() => setShowHorizontalOptionsModal(false)}>
+                  Закрыть
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showHorizontalShareModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3 className="modal-title">Поделиться треком</h3>
+              <p className="modal-text">
+                {currentTrack?.title && currentTrack?.uploader ?
+                  `Поделитесь треком "${currentTrack.title}" от ${currentTrack.uploader}` :
+                  'Поделитесь этим треком'}
+              </p>
+
+              <div className="share-link-container">
+                <input
+                  type="text"
+                  value={horizontalShareUrl}
+                  readOnly
+                  className="playlist-name-input share-url-input"
+                  onClick={(e) => e.target.select()}
+                />
+                <button
+                  className={`share-copy-button ${horizontalCopySuccess ? 'success' : ''}`}
+                  onClick={copyHorizontalToClipboard}
+                >
+                  {horizontalCopySuccess ? 'Скопировано!' : 'Копировать'}
+                </button>
+              </div>
+
+              <div className="share-options">
+                <div className="share-option telegram" title="Поделиться в Telegram" onClick={() => {
+                  window.open(`https://t.me/share/url?url=${encodeURIComponent(horizontalShareUrl)}&text=${encodeURIComponent(`Послушай "${currentTrack?.title}" от ${currentTrack?.uploader}`)}`);
+                }}>
+                  <div className="share-option-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8C16.49 10.38 15.84 14.22 15.51 15.99C15.37 16.74 15.09 16.99 14.83 17.02C14.25 17.07 13.81 16.64 13.25 16.27C12.37 15.69 11.87 15.33 11.02 14.77C10.03 14.12 10.67 13.76 11.24 13.18C11.39 13.03 13.95 10.7 14 10.49C14.0069 10.4582 14.006 10.4252 13.9973 10.3938C13.9886 10.3624 13.9724 10.3337 13.95 10.31C13.89 10.26 13.81 10.28 13.74 10.29C13.65 10.31 12.15 11.34 9.24 13.39C8.78 13.7 8.37 13.85 8 13.84C7.59 13.83 6.81 13.62 6.22 13.43C5.5 13.21 4.92 13.09 4.97 12.71C4.99 12.51 5.28 12.31 5.83 12.11C8.94 10.73 11.05 9.81 12.16 9.35C15.37 7.99 16.07 7.72 16.5 7.72C16.59 7.72 16.78 7.74 16.9 7.84C17 7.92 17.03 8.03 17.04 8.11C17.03 8.17 17.05 8.34 16.64 8.8Z" fill="#33a8e3" />
+                    </svg>
+                  </div>
+                  <span>Telegram</span>
+                </div>
+
+                <div className="share-option whatsapp" title="Поделиться в WhatsApp" onClick={() => {
+                  window.open(`https://wa.me/?text=${encodeURIComponent(`Послушай "${currentTrack?.title}" от ${currentTrack?.uploader}: ${horizontalShareUrl}`)}`);
+                }}>
+                  <div className="share-option-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.53 15.4C16.33 15.99 15.4 16.5 14.74 16.65C14.3 16.75 13.73 16.83 11.28 15.83C8.27 14.64 6.31 11.58 6.17 11.4C6.03 11.22 5 9.85 5 8.43C5 7.01 5.73 6.31 5.97 6.05C6.18 5.83 6.49 5.73 6.79 5.73C6.89 5.73 6.99 5.73 7.07 5.74C7.31 5.75 7.45 5.76 7.62 6.16C7.83 6.67 8.35 8.09 8.42 8.24C8.49 8.39 8.56 8.59 8.46 8.78C8.37 8.98 8.29 9.07 8.14 9.24C7.99 9.41 7.85 9.54 7.7 9.73C7.57 9.89 7.42 10.07 7.6 10.36C7.78 10.65 8.35 11.58 9.2 12.34C10.31 13.33 11.23 13.64 11.56 13.77C11.8 13.87 12.09 13.85 12.26 13.67C12.48 13.44 12.74 13.06 13.01 12.69C13.21 12.42 13.46 12.38 13.73 12.49C14.01 12.59 15.42 13.28 15.72 13.43C16.02 13.58 16.22 13.65 16.29 13.77C16.36 13.89 16.36 14.41 16.53 15.4Z" fill="#25d366" />
+                    </svg>
+                  </div>
+                  <span>WhatsApp</span>
+                </div>
+
+                <div className="share-option vk" title="Поделиться ВКонтакте" onClick={() => {
+                  window.open(`https://vk.com/share.php?url=${encodeURIComponent(horizontalShareUrl)}&title=${encodeURIComponent(currentTrack?.title)}&description=${encodeURIComponent(`Трек от ${currentTrack?.uploader}`)}`);
+                }}>
+                  <div className="share-option-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM17.24 14.26C17.24 14.26 18.23 15.24 18.47 15.65C18.48 15.66 18.48 15.67 18.49 15.67C18.58 15.82 18.6 15.94 18.55 16.03C18.47 16.2 18.14 16.3 18.04 16.3H16.38C16.26 16.3 16 16.28 15.69 16.07C15.45 15.91 15.21 15.64 14.98 15.38C14.63 14.99 14.33 14.66 14.03 14.66C14.002 14.6602 13.9739 14.6621 13.9464 14.6654C13.9189 14.6688 13.8923 14.6737 13.867 14.68C13.66 14.73 13.4 14.98 13.4 15.85C13.4 16.14 13.17 16.31 13.01 16.31H12.27C12.02 16.31 10.71 16.24 9.56 15.03C8.16 13.56 6.92 10.59 6.9 10.55C6.79 10.3 7 10.17 7.21 10.17H8.89C9.15 10.17 9.25 10.34 9.32 10.5C9.4 10.7 9.73 11.51 10.26 12.43C11.12 13.89 11.59 14.36 11.97 14.36C11.9947 14.3598 12.0191 14.3564 12.0428 14.3499C12.0665 14.3435 12.0893 14.334 12.11 14.32C12.43 14.15 12.36 12.86 12.34 12.52C12.34 12.49 12.34 11.86 12.13 11.57C11.97 11.36 11.70 11.29 11.55 11.26C11.61 11.18 11.68 11.12 11.76 11.08C12.07 10.93 12.62 10.91 13.17 10.91H13.47C14.07 10.92 14.21 10.96 14.41 11.01C14.81 11.12 14.81 11.39 14.75 12.14C14.73 12.39 14.71 12.67 14.71 13C14.71 13.08 14.7 13.17 14.7 13.26C14.68 13.71 14.66 14.23 14.93 14.42C14.9458 14.4302 14.9625 14.4375 14.98 14.44C15.05 14.44 15.28 14.44 15.97 12.45C16.24 11.79 16.47 11.03 16.48 10.98C16.5 10.92 16.53 10.83 16.63 10.77C16.7077 10.733 16.7937 10.7166 16.88 10.72H18.76C19 10.72 19.16 10.75 19.19 10.85C19.24 11.01 19.19 11.38 18.42 12.43L18.01 12.98C17.32 13.94 17.32 13.99 18.02 14.65C18.217 14.8346 18.4231 15.0261 18.64 15.24L17.24 14.26Z" fill="#4872a3" />
+                    </svg>
+                  </div>
+                  <span>ВКонтакте</span>
+                </div>
+              </div>
+
+              <div className="modal-buttons">
+                <div className="modal-button modal-button-confirm" onClick={() => setShowHorizontalShareModal(false)}>
+                  Закрыть
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

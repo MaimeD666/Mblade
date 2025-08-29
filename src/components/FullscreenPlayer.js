@@ -86,7 +86,7 @@ const FullscreenPlayer = ({
         setLyricsError('');
 
         try {
-            const result = await getLyrics(currentTrack.title, currentTrack.uploader);
+            const result = await getLyrics(currentTrack.title, currentTrack.uploader || currentTrack.artist);
 
             if (result.success && result.lyrics) {
                 setLyrics(result.lyrics);
@@ -138,7 +138,7 @@ const FullscreenPlayer = ({
 
         setLyricsLoading(true);
         try {
-            const result = await searchLyrics(currentTrack.title, currentTrack.uploader);
+            const result = await searchLyrics(currentTrack.title, currentTrack.uploader || currentTrack.artist);
             if (result.success && result.results) {
                 setAlternatives(result.results);
                 setShowAlternatives(true);
@@ -355,7 +355,7 @@ const FullscreenPlayer = ({
                         {currentTrack?.title || 'Нет трека'}
                     </h2>
                     <h3 className="fullscreen-track-author">
-                        {currentTrack?.uploader || ''}
+                        {currentTrack?.uploader || currentTrack?.artist || ''}
                     </h3>
                 </div>
 
@@ -507,7 +507,7 @@ const FullscreenPlayer = ({
             <div className={`lyrics-panel ${showLyrics ? 'open' : ''}`}>
                 <div className="lyrics-header">
                     <h2>{lyricsData?.title || currentTrack?.title || 'Нет трека'}</h2>
-                    <h3>{lyricsData?.artist || currentTrack?.uploader || ''}</h3>
+                    <h3>{lyricsData?.artist || currentTrack?.uploader || currentTrack?.artist || ''}</h3>
                     <div className="lyrics-controls">
                         {alternatives.length > 0 && (
                             <button

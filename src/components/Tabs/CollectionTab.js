@@ -1,7 +1,96 @@
 // src/components/Tabs/CollectionTab.js
 import React, { useState, useRef, useEffect } from 'react';
 import './CollectionTab.css';
-import { importSoundCloudPlaylist } from '../../services/api';
+import { importSoundCloudPlaylist, getYandexMusicPlaylists, getYandexMusicLikedTracks, getYandexMusicAuthStatus } from '../../services/api';
+
+// Компонент для отображения элемента импорта Яндекс.Музыки
+const YandexImportItem = ({ 
+  type, 
+  data, 
+  isSelected, 
+  onToggle, 
+  getTrackCountText 
+}) => {
+  const handleClick = () => {
+    if (type === 'playlist') {
+      onToggle(data.id, 'playlist');
+    } else if (type === 'liked') {
+      onToggle('favorites', 'liked');
+    }
+  };
+
+  const getIcon = () => {
+    if (type === 'liked') {
+      return '❤️';
+    }
+    return '🎵';
+  };
+
+  const getTitle = () => {
+    if (type === 'liked') {
+      return 'Любимые треки (YM favorite)';
+    }
+    return data.name;
+  };
+
+  const getTrackCount = () => {
+    if (type === 'liked') {
+      return data.length;
+    }
+    return data.tracks.length;
+  };
+
+  const getCover = () => {
+    if (type === 'playlist' && data.cover) {
+      return (
+        <img 
+          src={data.cover} 
+          alt={data.name}
+          className="yandex-import-item-cover-image"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'flex';
+          }}
+        />
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div 
+      className={`yandex-import-item ${isSelected ? 'selected' : ''}`}
+      onClick={handleClick}
+    >
+      <div className="yandex-import-item-header">
+        <div className="yandex-import-item-checkbox">
+          {isSelected && (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+            </svg>
+          )}
+        </div>
+        <div className="yandex-import-item-cover">
+          {getCover()}
+          <div 
+            className="yandex-import-item-cover-placeholder"
+            style={{ display: (type === 'playlist' && data.cover) ? 'none' : 'flex' }}
+          >
+            {getIcon()}
+          </div>
+        </div>
+      </div>
+      <div className="yandex-import-item-info">
+        <div className="yandex-import-item-title" title={getTitle()}>
+          {getTitle()}
+        </div>
+        <div className="yandex-import-item-count">
+          {getTrackCount()} {getTrackCountText(getTrackCount())}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Вспомогательная функция для склонения слова "трек"
 function getTrackCountText(count) {
@@ -589,7 +678,7 @@ const CombinePlaylistsModal = ({ isOpen, playlists, onClose, onCombine }) => {
 
 // Модальное окно импорта плейлистов
 const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImport, savePlaylistsToServer, setPlaylists }) => {
-  const [importSource, setImportSource] = useState('file'); // 'file' или 'soundcloud'
+  const [importSource, setImportSource] = useState('file'); // 'file', 'soundcloud' или 'yandex_music'
   const [fileContent, setFileContent] = useState(null);
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState('');
@@ -599,6 +688,67 @@ const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImpor
   const [soundcloudPlaylistUrl, setSoundcloudPlaylistUrl] = useState('');
   const [isImportingSoundcloud, setIsImportingSoundcloud] = useState(false);
   const [scPlaylistPreview, setScPlaylistPreview] = useState(null);
+  // Состояния для Яндекс.Музыки
+  const [yandexAuthStatus, setYandexAuthStatus] = useState(null);
+  const [yandexPlaylists, setYandexPlaylists] = useState(null);
+  const [yandexLikedTracks, setYandexLikedTracks] = useState(null);
+  const [selectedYandexItems, setSelectedYandexItems] = useState([]);
+  const [isLoadingYandex, setIsLoadingYandex] = useState(false);
+
+  // Проверка статуса авторизации в Яндекс.Музыке при открытии модального окна
+  useEffect(() => {
+    if (isOpen && importSource === 'yandex_music') {
+      checkYandexAuthStatus();
+    }
+  }, [isOpen, importSource]);
+
+  const checkYandexAuthStatus = async () => {
+    try {
+      const status = await getYandexMusicAuthStatus();
+      setYandexAuthStatus(status);
+      
+      if (status.authenticated) {
+        loadYandexData();
+      }
+    } catch (error) {
+      setError('Ошибка при проверке авторизации в Яндекс.Музыке');
+    }
+  };
+
+  const loadYandexData = async () => {
+    setIsLoadingYandex(true);
+    setError('');
+    
+    try {
+      const [playlistsData, likedData] = await Promise.all([
+        getYandexMusicPlaylists(),
+        getYandexMusicLikedTracks()
+      ]);
+      
+      setYandexPlaylists(playlistsData || []);
+      setYandexLikedTracks(likedData || []);
+    } catch (error) {
+      setError('Ошибка при загрузке данных из Яндекс.Музыки: ' + error.message);
+    } finally {
+      setIsLoadingYandex(false);
+    }
+  };
+
+  const toggleYandexItem = (itemId, type) => {
+    setSelectedYandexItems(prev => {
+      const itemKey = `${type}:${itemId}`;
+      console.log(`Toggling Yandex item: ${itemKey}`);
+      if (prev.includes(itemKey)) {
+        const updated = prev.filter(id => id !== itemKey);
+        console.log(`Removed item. Selected items:`, updated);
+        return updated;
+      } else {
+        const updated = [...prev, itemKey];
+        console.log(`Added item. Selected items:`, updated);
+        return updated;
+      }
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -833,6 +983,104 @@ const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImpor
     }
   };
 
+  const handleYandexImport = async () => {
+    console.log('Starting Yandex import with selected items:', selectedYandexItems);
+    console.log('Available Yandex playlists:', yandexPlaylists?.map(p => ({ id: p.id, name: p.name })));
+    console.log('Full playlist data for debugging:', yandexPlaylists);
+    
+    if (selectedYandexItems.length === 0) {
+      setError('Выберите плейлисты или любимые треки для импорта');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress(0);
+    setError('');
+
+    try {
+      const importedPlaylists = [];
+      const totalItems = selectedYandexItems.length;
+      
+      for (let i = 0; i < selectedYandexItems.length; i++) {
+        const item = selectedYandexItems[i];
+        const [type, ...itemIdParts] = item.split(':');
+        const itemId = itemIdParts.join(':'); // Восстанавливаем полный ID
+        
+        console.log(`Processing item: ${item}, type: ${type}, itemId: ${itemId}`);
+        setImportProgress(Math.round((i / totalItems) * 100));
+
+        if (type === 'playlist') {
+          // Импортируем плейлист
+          const playlist = yandexPlaylists.find(p => p.id === itemId);
+          console.log(`Importing playlist: ${playlist?.name}, tracks: ${playlist?.tracks?.length || 0}`);
+          
+          if (playlist) {
+            const newPlaylist = {
+              id: Date.now() + i,
+              name: playlist.name,
+              tracks: (playlist.tracks || []).map(track => ({
+                id: track.id,
+                platform: 'yandex_music',
+                title: track.title,
+                uploader: track.artist || 'Неизвестный исполнитель',
+                thumbnail: track.thumbnail || '',
+                duration: track.duration || 0
+              }))
+            };
+            importedPlaylists.push(newPlaylist);
+            console.log(`Added playlist to import: ${newPlaylist.name} with ${newPlaylist.tracks.length} tracks`);
+          } else {
+            console.log(`Playlist with id ${itemId} not found in yandexPlaylists`);
+          }
+        } else if (type === 'liked') {
+          // Импортируем любимые треки
+          if (yandexLikedTracks && yandexLikedTracks.length > 0) {
+            const favoritePlaylist = {
+              id: Date.now() + i,
+              name: 'YM favorite',
+              tracks: yandexLikedTracks.map(track => ({
+                id: track.id,
+                platform: 'yandex_music',
+                title: track.title,
+                uploader: track.artist || 'Неизвестный исполнитель',
+                thumbnail: track.thumbnail || '',
+                duration: track.duration || 0
+              }))
+            };
+            importedPlaylists.push(favoritePlaylist);
+          }
+        }
+      }
+
+      // Добавляем плейлисты в локальное состояние через onImport
+      if (importedPlaylists.length > 0) {
+        console.log('Yandex Music import: Adding playlists to collection:', importedPlaylists.map(p => ({ name: p.name, tracks: p.tracks.length })));
+        onImport(importedPlaylists);
+      } else {
+        console.log('Yandex Music import: No playlists to import');
+      }
+
+      // Обновляем состояние плейлистов для сохранения на сервере
+      const finalPlaylists = [...importedPlaylists, ...playlists];
+
+      // Сохраняем на сервере
+      await savePlaylistsToServer(finalPlaylists, likedTracks);
+
+      setImportProgress(100);
+      setTimeout(() => {
+        setSelectedYandexItems([]);
+        setIsImporting(false);
+        setImportProgress(0);
+        onClose();
+      }, 500);
+
+    } catch (error) {
+      console.error('Ошибка при импорте из Яндекс.Музыки:', error);
+      setError('Произошла ошибка при импорте: ' + error.message);
+      setIsImporting(false);
+    }
+  };
+
   const selectFile = () => {
     fileInputRef.current?.click();
   };
@@ -848,6 +1096,7 @@ const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImpor
             onClick={() => {
               setImportSource('file');
               setScPlaylistPreview(null);
+              setError('');
             }}
           >
             <span className="source-icon">📁</span>
@@ -859,6 +1108,7 @@ const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImpor
               setImportSource('soundcloud');
               setFileContent(null);
               setFileName('');
+              setError('');
             }}
           >
             <span className="source-icon">
@@ -870,6 +1120,24 @@ const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImpor
               </svg>
             </span>
             <span>Импорт с SoundCloud</span>
+          </div>
+          <div
+            className={`import-source-option ${importSource === 'yandex_music' ? 'active' : ''}`}
+            onClick={() => {
+              setImportSource('yandex_music');
+              setFileContent(null);
+              setFileName('');
+              setScPlaylistPreview(null);
+              setError('');
+            }}
+          >
+            <span className="source-icon">
+              <svg width="24" height="24" viewBox="0 0 48 48" fill="currentColor">
+                <path fill="#212121" d="M24.001,44.001c11.045,0,20-8.955,20-20s-8.955-20-20-20    c-11.045,0-20,8.955-20,20S12.956,44.001,24.001,44.001z"></path>
+                <path fill="#fcbe2d" d="M39.2,20.019l-0.129-0.607l-5.097-0.892l2.968-4.021    L36.6,14.104l-4.364,2.104l0.552-5.573l-0.447-0.261l-2.655,4.52l-2.971-6.728h-0.524l0.709,6.491l-7.492-6.019l-0.631,0.184    l5.757,7.281l-11.407-3.812l-0.527,0.58L22.8,18.705L8.739,19.887l-0.157,0.868l14.612,1.601L10.999,32.504l0.527,0.708    l14.508-7.937l-2.864,13.984h0.868l5.569-13.168L33,36.392l0.603-0.473L32.212,25.46l5.28,6.019l0.341-0.555l-4.045-7.463    l5.649,2.103l0.053-0.631l-5.072-3.76L39.2,20.019z"></path>
+              </svg>
+            </span>
+            <span>Импорт с Яндекс.Музыки</span>
           </div>
         </div>
 
@@ -940,7 +1208,7 @@ const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImpor
               <p className="progress-note">Пожалуйста, не закрывайте это окно до завершения импорта</p>
             </div>
           )
-        ) : (
+        ) : importSource === 'soundcloud' ? (
           // Интерфейс импорта с SoundCloud
           <div className="soundcloud-import-container">
             {!scPlaylistPreview ? (
@@ -1021,32 +1289,136 @@ const ImportPlaylistsModal = ({ isOpen, playlists, likedTracks, onClose, onImpor
               </div>
             )}
           </div>
+        ) : importSource === 'yandex_music' ? (
+          // Интерфейс импорта с Яндекс.Музыки
+          <div className="yandex-import-container">
+            {!yandexAuthStatus ? (
+              <div className="ym-loading">
+                <div className="loading-spinner"></div>
+                <p>Проверяем авторизацию...</p>
+              </div>
+            ) : !yandexAuthStatus.authenticated ? (
+              <div className="yandex-auth-required">
+                <div className="auth-icon">🔒</div>
+                <h4>Требуется авторизация</h4>
+                <p>Для импорта плейлистов необходимо войти в аккаунт Яндекс.Музыки</p>
+                <p>Перейдите в настройки приложения и подключите Яндекс.Музыку</p>
+              </div>
+            ) : isLoadingYandex ? (
+              <div className="ym-loading">
+                <div className="loading-spinner"></div>
+                <p>Загружаем ваши плейлисты и любимые треки...</p>
+              </div>
+            ) : (
+              <div className="yandex-content-container">
+                <div className="yandex-account-info">
+                  <div className="account-avatar">👤</div>
+                  <div className="account-details">
+                    <div className="account-name">
+                      {yandexAuthStatus.account?.display_name || yandexAuthStatus.account?.login}
+                    </div>
+                    <div className="account-status">Яндекс.Музыка подключена</div>
+                  </div>
+                </div>
 
-        )}
+                <div className="import-selection-section">
+                  <h4>Выберите что импортировать:</h4>
+                  
+                  {/* Любимые треки */}
+                  {yandexLikedTracks && yandexLikedTracks.length > 0 && (
+                    <div className="yandex-import-section">
+                      <h5>Любимые треки:</h5>
+                      <YandexImportItem
+                        type="liked"
+                        data={yandexLikedTracks}
+                        isSelected={selectedYandexItems.includes('liked:favorites')}
+                        onToggle={toggleYandexItem}
+                        getTrackCountText={getTrackCountText}
+                      />
+                    </div>
+                  )}
+
+                  {/* Плейлисты */}
+                  {yandexPlaylists && yandexPlaylists.length > 0 && (
+                    <div className="yandex-import-section">
+                      <h5>Плейлисты:</h5>
+                      <div className="yandex-import-grid">
+                        {yandexPlaylists.map(playlist => (
+                          <YandexImportItem
+                            key={playlist.id}
+                            type="playlist"
+                            data={playlist}
+                            isSelected={selectedYandexItems.includes(`playlist:${playlist.id}`)}
+                            onToggle={toggleYandexItem}
+                            getTrackCountText={getTrackCountText}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(!yandexPlaylists || yandexPlaylists.length === 0) && 
+                   (!yandexLikedTracks || yandexLikedTracks.length === 0) && (
+                    <div className="empty-yandex-data">
+                      <p>У вас нет плейлистов или любимых треков в Яндекс.Музыке</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {isImporting && (
+              <div className="import-progress-container">
+                <div className="progress-info">
+                  <div className="progress-label">Импорт из Яндекс.Музыки...</div>
+                  <div className="progress-percentage">{importProgress}%</div>
+                </div>
+                <div className="progress-bar-container">
+                  <div className="progress-bar" style={{ width: `${importProgress}%` }}></div>
+                </div>
+                <p className="progress-note">Пожалуйста, не закрывайте это окно до завершения импорта</p>
+              </div>
+            )}
+          </div>
+        ) : null}
 
         <div className="modal-buttons">
           <div
             className="modal-button modal-button-cancel"
             onClick={onClose}
-            style={{ opacity: (isImporting || isImportingSoundcloud) ? 0.5 : 1 }}
-            disabled={isImporting || isImportingSoundcloud}
+            style={{ opacity: (isImporting || isImportingSoundcloud || isLoadingYandex) ? 0.5 : 1 }}
+            disabled={isImporting || isImportingSoundcloud || isLoadingYandex}
           >
             Отмена
           </div>
           <div
             className="modal-button modal-button-confirm"
-            onClick={importSource === 'file' ? handleImport : handleSoundcloudImport}
+            onClick={
+              importSource === 'file' ? handleImport :
+              importSource === 'soundcloud' ? handleSoundcloudImport :
+              importSource === 'yandex_music' ? handleYandexImport : null
+            }
             style={{
-              opacity: ((importSource === 'file' && fileContent && !isImporting) ||
-                (importSource === 'soundcloud' && (soundcloudPlaylistUrl || scPlaylistPreview) && !isImportingSoundcloud)) ? 1 : 0.5,
-              cursor: ((importSource === 'file' && fileContent && !isImporting) ||
-                (importSource === 'soundcloud' && (soundcloudPlaylistUrl || scPlaylistPreview) && !isImportingSoundcloud)) ? 'pointer' : 'not-allowed'
+              opacity: (
+                (importSource === 'file' && fileContent && !isImporting) ||
+                (importSource === 'soundcloud' && (soundcloudPlaylistUrl || scPlaylistPreview) && !isImportingSoundcloud) ||
+                (importSource === 'yandex_music' && yandexAuthStatus?.authenticated && selectedYandexItems.length > 0 && !isImporting && !isLoadingYandex)
+              ) ? 1 : 0.5,
+              cursor: (
+                (importSource === 'file' && fileContent && !isImporting) ||
+                (importSource === 'soundcloud' && (soundcloudPlaylistUrl || scPlaylistPreview) && !isImportingSoundcloud) ||
+                (importSource === 'yandex_music' && yandexAuthStatus?.authenticated && selectedYandexItems.length > 0 && !isImporting && !isLoadingYandex)
+              ) ? 'pointer' : 'not-allowed'
             }}
-            disabled={(importSource === 'file' && (!fileContent || isImporting)) ||
-              (importSource === 'soundcloud' && ((!soundcloudPlaylistUrl && !scPlaylistPreview) || isImportingSoundcloud))}
+            disabled={
+              (importSource === 'file' && (!fileContent || isImporting)) ||
+              (importSource === 'soundcloud' && ((!soundcloudPlaylistUrl && !scPlaylistPreview) || isImportingSoundcloud)) ||
+              (importSource === 'yandex_music' && (!yandexAuthStatus?.authenticated || selectedYandexItems.length === 0 || isImporting || isLoadingYandex))
+            }
           >
             {isImporting || isImportingSoundcloud ? 'Импортирую...' :
-              (importSource === 'soundcloud' && !scPlaylistPreview) ? 'Предпросмотр' : 'Импортировать'}
+             isLoadingYandex ? 'Загрузка...' :
+             (importSource === 'soundcloud' && !scPlaylistPreview) ? 'Предпросмотр' : 'Импортировать'}
           </div>
         </div>
       </div>
@@ -2098,6 +2470,14 @@ const CollectionTab = ({
         playlists={playlists}
         likedTracks={likedTracks}
         onClose={() => setImportPlaylistsModal(false)}
+        onImport={(newPlaylists) => {
+          console.log('onImport called with playlists:', newPlaylists.map(p => ({ name: p.name, tracks: p.tracks?.length || 0 })));
+          setPlaylists(prevPlaylists => {
+            const updated = [...newPlaylists, ...prevPlaylists]; // Добавляем в начало
+            console.log('Updated playlists count:', updated.length);
+            return updated;
+          });
+        }}
         savePlaylistsToServer={savePlaylistsToServer}
         setPlaylists={setPlaylists}
       />

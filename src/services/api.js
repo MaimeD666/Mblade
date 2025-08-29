@@ -1,6 +1,6 @@
 import { getNotificationManager } from '../components/NotificationSystem';
 
-export const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 const activeRequests = {};
 let cancelRequested = false;
@@ -44,19 +44,19 @@ export const searchAllPlatforms = async (query) => {
     }
     const data = await response.json();
 
-    const totalResults = (data.youtube?.length || 0) + (data.soundcloud?.length || 0) + (data.vkmusic?.length || 0);
+    const totalResults = (data.youtube?.length || 0) + (data.soundcloud?.length || 0) + (data.yandex_music?.length || 0) + (data.vkmusic?.length || 0);
 
     if (totalResults === 0) {
       notifications.showWarning('Поиск завершен', 'По вашему запросу ничего не найдено', `Запрос: "${query}"`);
     } else {
-      notifications.showSuccess('Поиск завершен', `Найдено ${totalResults} треков`, `YouTube: ${data.youtube?.length || 0}, SoundCloud: ${data.soundcloud?.length || 0}`);
+      notifications.showSuccess('Поиск завершен', `Найдено ${totalResults} треков`, `YouTube: ${data.youtube?.length || 0}, SoundCloud: ${data.soundcloud?.length || 0}, Яндекс.Музыка: ${data.yandex_music?.length || 0}`);
     }
 
     return data;
   } catch (error) {
     console.error('Search error:', error);
     notifications.handleApiError(error, 'Search');
-    return { youtube: [], soundcloud: [], vkmusic: [] };
+    return { youtube: [], soundcloud: [], yandex_music: [], vkmusic: [] };
   }
 };
 
@@ -97,6 +97,8 @@ export const getStreamUrl = (track) => {
       return `${API_BASE_URL}/fast-stream/youtube?id=${track.id}`;
     case 'soundcloud':
       return `${API_BASE_URL}/stream/soundcloud?id=${track.id}`;
+    case 'yandex_music':
+      return `${API_BASE_URL}/yandex-music/stream?id=${track.id}`;
     case 'vkmusic':
       return `${API_BASE_URL}/stream/vkmusic?id=${track.id}`;
     case 'local':
@@ -118,6 +120,8 @@ export const getDownloadUrl = (track) => {
       return `${API_BASE_URL}/download/youtube?id=${encodeURIComponent(track.id)}`;
     case 'soundcloud':
       return `${API_BASE_URL}/download/soundcloud?id=${encodeURIComponent(track.id)}`;
+    case 'yandex_music':
+      return `${API_BASE_URL}/yandex-music/download?id=${encodeURIComponent(track.id)}`;
     case 'local':
       return `${API_BASE_URL}/download/local?id=${encodeURIComponent(track.id)}`;
     case 'vkmusic':
@@ -1045,6 +1049,198 @@ export const importAllData = async (file) => {
   } catch (error) {
     console.error('Error importing data:', error);
     notifications.handleApiError(error, 'Импорт данных');
+    return { success: false, error: error.message };
+  }
+};
+
+// Yandex Music API Functions
+export const getYandexMusicAuthStatus = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/yandex-music/auth-status`);
+    if (!response.ok) {
+      throw new Error(`Auth status error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting Yandex Music auth status:', error);
+    return { authenticated: false, error: error.message };
+  }
+};
+
+export const loginYandexMusic = async (token) => {
+  const notifications = getNotifications();
+  
+  try {
+    notifications.showInfo('Аутентификация', 'Подключаемся к Яндекс.Музыке...');
+    
+    const response = await fetch(`${API_BASE_URL}/yandex-music/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      notifications.showSuccess(
+        'Подключение успешно',
+        'Вы успешно подключились к Яндекс.Музыке',
+        result.account ? `Аккаунт: ${result.account.display_name || result.account.login}` : ''
+      );
+    } else {
+      notifications.showError('Ошибка подключения', result.error || 'Не удалось подключиться к Яндекс.Музыке');
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error logging into Yandex Music:', error);
+    notifications.handleApiError(error, 'Yandex Music Login');
+    return { success: false, error: error.message };
+  }
+};
+
+export const logoutYandexMusic = async () => {
+  const notifications = getNotifications();
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/yandex-music/logout`, {
+      method: 'POST'
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      notifications.showSuccess('Отключение завершено', 'Вы отключились от Яндекс.Музыки');
+    } else {
+      notifications.showError('Ошибка отключения', result.error || 'Не удалось отключиться от Яндекс.Музыки');
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error logging out of Yandex Music:', error);
+    notifications.handleApiError(error, 'Yandex Music Logout');
+    return { success: false, error: error.message };
+  }
+};
+
+export const getYandexMusicPlaylists = async () => {
+  const notifications = getNotifications();
+  
+  try {
+    notifications.showInfo('Яндекс.Музыка', 'Получаем ваши плейлисты...');
+    
+    const response = await fetch(`${API_BASE_URL}/yandex-music/playlists`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch playlists: ${response.status}`);
+    }
+    
+    const playlists = await response.json();
+    
+    notifications.showSuccess('Яндекс.Музыка', `Получено ${playlists.length} плейлистов`);
+    
+    return playlists;
+    
+  } catch (error) {
+    console.error('Error fetching Yandex Music playlists:', error);
+    notifications.handleApiError(error, 'Получение плейлистов Яндекс.Музыки');
+    throw error;
+  }
+};
+
+export const getYandexMusicLikedTracks = async () => {
+  const notifications = getNotifications();
+  
+  try {
+    notifications.showInfo('Яндекс.Музыка', 'Получаем ваши любимые треки...');
+    
+    const response = await fetch(`${API_BASE_URL}/yandex-music/liked-tracks`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch liked tracks: ${response.status}`);
+    }
+    
+    const tracks = await response.json();
+    
+    notifications.showSuccess('Яндекс.Музыка', `Получено ${tracks.length} любимых треков`);
+    
+    return tracks;
+    
+  } catch (error) {
+    console.error('Error fetching Yandex Music liked tracks:', error);
+    notifications.handleApiError(error, 'Получение любимых треков Яндекс.Музыки');
+    throw error;
+  }
+};
+
+// Yandex Music Wave API Functions
+export const startYandexWave = async (settings = {}) => {
+  try {
+    const url = new URL(`${API_BASE_URL}/yandex-music/wave/start`);
+    
+    // Добавляем параметры настроек как query parameters
+    if (settings.mood) {
+      url.searchParams.append('mood', settings.mood);
+    }
+    if (settings.character) {
+      url.searchParams.append('character', settings.character);
+    }
+    
+    console.log('[API] Starting wave with settings:', settings, 'URL:', url.toString());
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Wave start error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+    
+  } catch (error) {
+    console.error('Error starting Yandex Music wave:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getYandexRecommendations = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/yandex-music/recommendations`);
+    
+    if (!response.ok) {
+      throw new Error(`Recommendations error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+    
+  } catch (error) {
+    console.error('Error getting Yandex Music recommendations:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const yandexWaveFeedback = async (trackId, feedbackType, playedSeconds = null, trackDuration = null) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/yandex-music/wave/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        trackId, 
+        type: feedbackType, // 'trackStarted', 'trackFinished', 'like', 'dislike', 'skip'
+        playedSeconds,
+        trackDuration
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Feedback error: ${response.status}`);
+    }
+    
+    return await response.json();
+    
+  } catch (error) {
+    console.error('Error sending Yandex Music wave feedback:', error);
     return { success: false, error: error.message };
   }
 };

@@ -1,0 +1,308 @@
+.authentication-panel {
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.02);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.05);
+  transition: all 0.3s ease;
+}
+
+.auth-header {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.auth-header h4 {
+  color: var(--text-color);
+  font-family: "Secular One-Regular", Helvetica;
+  font-size: 22px;
+  margin: 0 0 8px 0;
+  transition: color 0.3s ease;
+}
+
+.auth-header p {
+  color: var(--text-color-secondary);
+  font-family: "Secular One-Regular", Helvetica;
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.service-auth-item {
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.03);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  border: 1px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.08);
+  transition: all 0.3s ease;
+}
+
+.service-auth-item:hover {
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.05);
+  border-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.15);
+}
+
+.service-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.service-header svg {
+  width: 24px;
+  height: 24px;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+.service-info {
+  flex: 1;
+}
+
+.service-name {
+  font-family: "Secular One-Regular", Helvetica;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 5px;
+}
+
+.service-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-family: "Secular One-Regular", Helvetica;
+}
+
+.service-status.connected {
+  color: #27ae60;
+}
+
+.service-status.disconnected {
+  color: #e74c3c;
+}
+
+.service-status svg {
+  width: 16px;
+  height: 16px;
+}
+
+.service-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.input-with-help {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 300px;
+}
+
+.input-container {
+  position: relative;
+  flex: 1;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px 80px 12px 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.05);
+  color: var(--text-color);
+  font-family: "Secular One-Regular", Helvetica;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.auth-input::placeholder {
+  color: var(--text-color-secondary);
+  opacity: 0.7;
+}
+
+.help-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: "Secular One-Regular", Helvetica;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.help-button:hover {
+  background-color: var(--button-hover);
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.help-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: var(--modal-bg);
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90vw;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 1100;
+  color: var(--text-color);
+  border: 1px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  font-family: "Secular One-Regular", Helvetica;
+  animation: fadeIn 0.3s ease;
+}
+
+.help-tooltip h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: var(--text-color);
+  font-size: 16px;
+  border-bottom: 1px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  padding-bottom: 8px;
+  font-weight: 600;
+}
+
+.help-tooltip ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.help-tooltip li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.help-tooltip code {
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.help-tooltip a {
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.help-tooltip a:hover {
+  color: var(--button-hover);
+  text-decoration: underline;
+}
+
+.help-tooltip p {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.auth-button {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-family: "Secular One-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.auth-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.auth-button.primary {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  box-shadow: 0 2px 8px rgba(var(--accent-color-rgb), 0.3);
+}
+
+.auth-button.primary:not(:disabled):hover {
+  background-color: var(--button-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.4);
+}
+
+.auth-button.secondary {
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  color: var(--text-color);
+  border: 2px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.2);
+}
+
+.auth-button.secondary:not(:disabled):hover {
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .service-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .service-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .input-with-help {
+    min-width: unset;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .help-tooltip {
+    width: 300px;
+    right: -10px;
+  }
+}

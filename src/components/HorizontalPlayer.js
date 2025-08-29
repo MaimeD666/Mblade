@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import './MusicPlayer.css';
-import './ShareComponent.css';
+import './HorizontalPlayer.css';
 import { setCurrentTrack, downloadTrack } from '../services/api';
 import FullscreenPlayer from './FullscreenPlayer';
 
@@ -327,66 +326,71 @@ const ShareModal = ({ isOpen, onClose, url, trackTitle, trackAuthor, onCopy, cop
 
 const PlayerIcons = {
   play: (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M8 5.14V19.14C8 19.94 8.85 20.44 9.54 20.05L20.54 13.05C21.15 12.71 21.15 11.81 20.54 11.47L9.54 4.47C8.85 4.08 8 4.58 8 5.14Z" fill="white" />
     </svg>
   ),
   pause: (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M6 19H10V5H6V19ZM14 5V19H18V5H14Z" fill="white" />
     </svg>
   ),
   prev: (
-    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 7C5.45 7 5 7.45 5 8C5 8.55 5.45 9 6 9H18C18.55 9 19 8.55 19 8C19 7.45 18.55 7 18 7H6ZM12.41 11.66L17.01 18.66C17.42 19.29 16.97 20.12 16.22 20.12H7.82001C7.07001 20.12 6.62001 19.29 7.03001 18.66L11.63 11.66C12 11.09 12.04 11.09 12.41 11.66Z" fill="white" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="white" />
     </svg>
   ),
   next: (
-    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 17C5.45 17 5 16.55 5 16C5 15.45 5.45 15 6 15H18C18.55 15 19 15.45 19 16C19 16.55 18.55 17 18 17H6ZM12.41 12.34L17.01 5.34C17.42 4.71 16.97 3.88 16.22 3.88H7.82001C7.07001 3.88 6.62001 4.71 7.03001 5.34L11.63 12.34C12 12.91 12.04 12.91 12.41 12.34Z" fill="white" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="white" />
     </svg>
   ),
   download: (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M16.59 9H15V4C15 3.45 14.55 3 14 3H10C9.45 3 9 3.45 9 4V9H7.41C6.52 9 6.08 10.08 6.71 10.71L11.3 15.3C11.69 15.69 12.32 15.69 12.71 15.3L17.3 10.71C17.92 10.08 17.48 9 16.59 9ZM5 19C5 19.55 5.45 20 6 20H18C18.55 20 19 19.55 19 19C19 18.45 18.55 18 18 18H6C5.45 18 5 18.45 5 19Z" fill="white" />
     </svg>
   ),
   like: (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z" fill="white" />
     </svg>
   ),
   liked: (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z" fill="#ff5e94" />
     </svg>
   ),
   playlist: (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M2 17H12V19H2V17ZM2 5H22V7H2V5ZM2 11H22V13H2V11ZM17.35 21.41L16.29 20.35L18.64 18H15V16H18.64L16.29 13.65L17.35 12.59L21.77 17L17.35 21.41Z" fill="white" />
     </svg>
   ),
   more: (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 8C13.1 8 14 7.1 14 6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6C10 7.1 10.9 8 12 8ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10ZM12 16C10.9 16 10 16.9 10 18C10 19.1 10.9 20 12 20C13.1 20 14 19.1 14 18C14 16.9 13.1 16 12 16Z" fill="white" />
     </svg>
   ),
   repeatTrack: (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" fill="#64e0ff" />
       <circle cx="18" cy="18" r="6" fill="rgba(0,0,0,0.5)" />
       <text x="18" y="21" textAnchor="middle" fontSize="8" fill="#64e0ff">1</text>
     </svg>
   ),
   repeatPlaylist: (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" fill="#64e0ff" />
       <path d="M14 12l-3 0v-2l-4 3 4 3v-2h3v-2z" fill="#64e0ff" fillOpacity="0.8" />
+    </svg>
+  ),
+  volume: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="white" />
     </svg>
   )
 };
 
-const MusicPlayer = ({
+const HorizontalPlayer = ({
   currentTrack,
   isPlaying,
   setIsPlaying,
@@ -409,20 +413,19 @@ const MusicPlayer = ({
   clearCustomQueue,
   onSyncTrack,
   onSyncPlayback,
-  onOpenEqualizer
+  onOpenEqualizer,
+  onShowPlaylistModal,
+  onShowOptionsModal,
+  onShowShareModal
 }) => {
-
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(100);
   const [isDraggingProgress, setIsDraggingProgress] = useState(false);
   const [isDraggingVolume, setIsDraggingVolume] = useState(false);
   const [buttonPulse, setButtonPulse] = useState(false);
-  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -434,7 +437,6 @@ const MusicPlayer = ({
   const progressBarRef = useRef(null);
   const volumeBarRef = useRef(null);
   const lastTrackIdRef = useRef(null);
-
 
   useEffect(() => {
     if (currentTrack && isFirstLoad) {
@@ -460,7 +462,6 @@ const MusicPlayer = ({
       lastTrackIdRef.current = `${currentTrack.platform}-${currentTrack.id}`;
     }
   }, [currentTrack]);
-
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -590,10 +591,10 @@ const MusicPlayer = ({
         .then(() => console.log('Контент успешно отправлен'))
         .catch((error) => {
           console.log('Ошибка отправки:', error);
-          setShowShareModal(true);
+          if (onShowShareModal) onShowShareModal();
         });
     } else {
-      setShowShareModal(true);
+      if (onShowShareModal) onShowShareModal();
     }
   };
 
@@ -742,12 +743,9 @@ const MusicPlayer = ({
   }, [currentTrack, audioRef.current?.duration]);
 
   const handleProgressUpdate = (e) => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !progressBarRef.current) return;
 
-    const progressBar = document.querySelector('.overlap');
-    if (!progressBar) return;
-
-    const rect = progressBar.getBoundingClientRect();
+    const rect = progressBarRef.current.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const percent = Math.max(0, Math.min((offsetX / rect.width) * 100, 100));
 
@@ -781,14 +779,13 @@ const MusicPlayer = ({
   };
 
   const handleVolumeUpdate = (e) => {
-    const volumeBar = document.querySelector('.volume-wrapper');
-    const rect = volumeBar.getBoundingClientRect();
-    
-    // Вертикальный слайдер
-    const offsetY = rect.bottom - e.clientY;
-    const maxY = rect.height - 6;
-    const boundedOffsetY = Math.max(0, Math.min(offsetY, maxY));
-    const percent = (boundedOffsetY / maxY) * 100;
+    if (!volumeBarRef.current) return;
+
+    const rect = volumeBarRef.current.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const maxX = rect.width;
+    const boundedOffsetX = Math.max(0, Math.min(offsetX, maxX));
+    const percent = (boundedOffsetX / maxX) * 100;
 
     setVolume(percent);
     if (audioRef.current) {
@@ -808,14 +805,6 @@ const MusicPlayer = ({
       } else {
         audioRef.current.pause();
         setIsPlaying(false);
-        
-        const playButton = document.querySelector('.play-stop');
-        if (playButton) {
-          playButton.classList.add('pause-ripple');
-          setTimeout(() => {
-            playButton.classList.remove('pause-ripple');
-          }, 600);
-        }
       }
 
       setButtonPulse(true);
@@ -825,12 +814,12 @@ const MusicPlayer = ({
 
   const handleAddToPlaylist = () => {
     if (!currentTrack) return;
-    setShowPlaylistModal(true);
+    if (onShowPlaylistModal) onShowPlaylistModal();
   };
 
   const handleShowOptions = () => {
     if (!currentTrack) return;
-    setShowOptionsModal(true);
+    if (onShowOptionsModal) onShowOptionsModal();
   };
 
   const handlePrevTrack = () => {
@@ -880,257 +869,205 @@ const MusicPlayer = ({
 
   const actuallyPlaying = audioRef.current ? !audioRef.current.paused : isPlaying;
 
-  const playerClasses = `music-player ${!currentTrack ? 'player-empty' : ''} ${currentTrack && isFirstLoad ? 'first-track-loaded' : ''}`;
+  const playerClasses = `horizontal-music-player ${!currentTrack ? 'player-empty' : ''} ${currentTrack && isFirstLoad ? 'first-track-loaded' : ''}`;
 
   const additionalButtonClass = `additional ${repeatMode !== REPEAT_MODES.NONE ? 'repeat-active' : ''}`;
 
   const downloadButtonClass = `download ${!currentTrack || !isDownloadReady || isDownloading ? 'disabled' : ''}`;
 
   return (
-  <div className={playerClasses}>
-    {/* ───────── основное “тело” плеера ───────── */}
-    <div className="overlap-group">
-      {!currentTrack && <div className="empty-player-bubble" />}
+    <div className={playerClasses}>
+      <div className="horizontal-player-container">
+        {/* Управление треком */}
+        <div className="horizontal-controls">
+          <div className="player-panel">
+            <button
+              className={`control-button prev-button ${!hasPrev ? 'disabled' : ''}`}
+              onClick={handlePrevTrack}
+              disabled={!hasPrev}
+              title="Предыдущий трек"
+            >
+              {PlayerIcons.prev}
+            </button>
 
-      {/* ===== ПРОГРЕСС ===== */}
-      <div className="slider-container">
-        <div
-          className={`overlap ${!canSeek ? 'disabled' : ''}`}
-          ref={progressBarRef}
-          onClick={canSeek ? handleProgressUpdate : undefined}
-          onMouseDown={
-            canSeek
-              ? (e) => {
-                  setIsDraggingProgress(true);
-                  progressBarRef.current.classList.add('dragging');
-                  handleProgressUpdate(e);
-                }
-              : undefined
-          }
-          style={!canSeek ? { cursor: 'not-allowed' } : {}}
-        >
-          <div className="time-progress-bar" style={{ width: `${progress}%` }}>
-            <div className="progress-knob">
-              <div className="progress-knob-pulse" />
-            </div>
+            <button
+              className={`control-button play-button ${buttonPulse ? 'pulse' : ''} ${actuallyPlaying ? 'is-playing' : ''}`}
+              onClick={togglePlayPause}
+              title={actuallyPlaying ? 'Пауза' : 'Воспроизведение'}
+            >
+              {actuallyPlaying ? PlayerIcons.pause : PlayerIcons.play}
+            </button>
+
+            <button
+              className={`control-button next-button ${!hasNext ? 'disabled' : ''}`}
+              onClick={handleNextTrack}
+              disabled={!hasNext}
+              title="Следующий трек"
+            >
+              {PlayerIcons.next}
+            </button>
           </div>
         </div>
 
-        <div className="time-display">
-          <span className="current-time">{formatTime(currentTime)}</span>
-          <span className="duration">{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      {/* ===== ГРОМКОСТЬ ===== */}
-      <div className="slider-container">
-        <div
-          className="volume-wrapper"
-          ref={volumeBarRef}
-          onClick={handleVolumeUpdate}
-          onMouseDown={(e) => {
-            setIsDraggingVolume(true);
-            volumeBarRef.current.classList.add('dragging');
-            handleVolumeUpdate(e);
-          }}
-        >
-          <div className="volume" style={{ height: `${volume}%` }}>
-            <div className="volume-knob">
-              <div className="volume-knob-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ===== ОБЛОЖКА + ТИТРЫ ===== */}
-      <div
-        className={`track-image ${
-          !currentTrack ? 'track-image-empty' : ''
-        } ${isLoading ? 'track-image-loading' : ''}`}
-        onClick={currentTrack ? toggleFullscreen : undefined}
-        style={currentTrack ? { cursor: 'pointer' } : {}}
-      >
-        {currentTrack?.thumbnail && (
-          <img src={currentTrack.thumbnail} alt={currentTrack.title} />
-        )}
-        {isLoading && <div className="loading-spinner" />}
-      </div>
-
-      <div
-        className={`text-wrapper ${!currentTrack ? 'empty' : ''} ${
-          isLoading ? 'loading' : ''
-        }`}
-      >
-        {currentTrack ? currentTrack.title : 'Нет трека'}
-      </div>
-
-      <div
-        className={`track-author ${!currentTrack ? 'empty' : ''} ${
-          isLoading ? 'loading' : ''
-        }`}
-      >
-        {currentTrack
-          ? (currentTrack.uploader || currentTrack.artist)
-          : 'Выберите трек для воспроизведения'}
-      </div>
-
-      {/* ===== КНОПКИ УПРАВЛЕНИЯ ===== */}
-      <div
-        className={`play-stop ${buttonPulse ? 'pulse' : ''} ${
-          actuallyPlaying ? 'is-playing' : ''
-        }`}
-        onClick={togglePlayPause}
-      >
-        <div className="play-icon">
-          {actuallyPlaying ? PlayerIcons.pause : PlayerIcons.play}
-        </div>
-        <div className="button-glow" />
-      </div>
-
-      <div
-        className={`prewious-track ${!hasPrev ? 'disabled' : ''}`}
-        onClick={handlePrevTrack}
-        title="Предыдущий трек"
-      >
-        {PlayerIcons.prev}
-        <div className="button-glow small" />
-      </div>
-
-      <div
-        className={`next-track ${!hasNext ? 'disabled' : ''}`}
-        onClick={handleNextTrack}
-        title="Следующий трек"
-      >
-        {PlayerIcons.next}
-        <div className="button-glow small" />
-      </div>
-
-      <div
-        className={downloadButtonClass}
-        onClick={handleDownload}
-        title={
-          !currentTrack
-            ? 'Нет трека для скачивания'
-            : !isDownloadReady
-            ? 'Трек загружается...'
-            : isDownloading
-            ? 'Скачивание...'
-            : 'Скачать трек'
-        }
-      >
-        {PlayerIcons.download}
-        <div className="button-glow small" />
-      </div>
-
-      <div
-        className="like"
-        onClick={toggleLike}
-        style={{ cursor: currentTrack ? 'pointer' : 'default' }}
-        title={isLiked ? 'Удалить из любимых' : 'Добавить в любимые'}
-      >
-        {isLiked ? PlayerIcons.liked : PlayerIcons.like}
-        <div className="button-glow small" />
-      </div>
-
-      <div
-        className={additionalButtonClass}
-        onClick={handleShowOptions}
-        style={{ cursor: currentTrack ? 'pointer' : 'default' }}
-        title={
-          repeatMode === REPEAT_MODES.TRACK
-            ? 'Повтор трека включен'
-            : repeatMode === REPEAT_MODES.PLAYLIST
-            ? 'Повтор плейлиста включен'
-            : 'Дополнительные опции'
-        }
-      >
-        {getAdditionalButtonIcon()}
-        <div className="button-glow small" />
-      </div>
-
-      <div
-        className="addtoplaylist"
-        onClick={handleAddToPlaylist}
-        style={{ cursor: currentTrack ? 'pointer' : 'default' }}
-        title="Добавить в плейлист"
-      >
-        {PlayerIcons.playlist}
-        <div className="button-glow small" />
-      </div>
-
-      {/* ===== ОВЕРЛЕЙ ТРАНСКОДИРОВАНИЯ ===== */}
-      {currentTrack?.isTranscoding && (
-        <div className="transcoding-overlay">
-          <div className="transcoding-container">
-            <div className="transcoding-label">Транскодирование...</div>
-            <div className="transcoding-progress-container">
+        {/* Информация о треке */}
+        <div className="horizontal-track-info">
+          <div className="player-panel">
+            <div className="track-image-container">
               <div
-                className="transcoding-progress-bar"
-                style={{ width: `${currentTrack.transcodingProgress || 0}%` }}
-              />
+                className={`track-image ${!currentTrack ? 'track-image-empty' : ''} ${isLoading ? 'track-image-loading' : ''}`}
+                onClick={currentTrack ? toggleFullscreen : undefined}
+                style={currentTrack ? { cursor: 'pointer' } : {}}
+              >
+                {currentTrack?.thumbnail && (
+                  <img src={currentTrack.thumbnail} alt={currentTrack.title} />
+                )}
+                {isLoading && <div className="loading-spinner" />}
+              </div>
             </div>
-            <div className="transcoding-percentage">
-              {currentTrack.transcodingProgress || 0}%
+
+            <div className="track-details">
+              <div className="track-title">
+                {currentTrack ? currentTrack.title : 'Нет трека'}
+              </div>
+              <div className="track-artist">
+                {currentTrack
+                  ? (currentTrack.uploader || currentTrack.artist)
+                  : 'Выберите трек для воспроизведения'}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Прогресс и время */}
+        <div className="horizontal-progress-section">
+          <div className="player-panel">
+            <span className="current-time">{formatTime(currentTime)}</span>
+            <div
+              className={`progress-bar ${!canSeek ? 'disabled' : ''}`}
+              ref={progressBarRef}
+              onClick={canSeek ? handleProgressUpdate : undefined}
+              onMouseDown={
+                canSeek
+                  ? (e) => {
+                      setIsDraggingProgress(true);
+                      progressBarRef.current.classList.add('dragging');
+                      handleProgressUpdate(e);
+                    }
+                  : undefined
+              }
+              style={!canSeek ? { cursor: 'not-allowed' } : {}}
+            >
+              <div className="progress-fill" style={{ width: `${progress}%` }}>
+                <div className="progress-handle" />
+              </div>
+            </div>
+            <span className="duration">{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        {/* Действия */}
+        <div className="horizontal-actions">
+          <div className="player-panel">
+            <button
+              className="action-button like-button"
+              onClick={toggleLike}
+              disabled={!currentTrack}
+              title={isLiked ? 'Удалить из любимых' : 'Добавить в любимые'}
+            >
+              {isLiked ? PlayerIcons.liked : PlayerIcons.like}
+            </button>
+
+            <button
+              className="action-button playlist-button"
+              onClick={handleAddToPlaylist}
+              disabled={!currentTrack}
+              title="Добавить в плейлист"
+            >
+              {PlayerIcons.playlist}
+            </button>
+
+            <button
+              className="action-button download-button"
+              onClick={handleDownload}
+              title="Скачать трек"
+            >
+              {PlayerIcons.download}
+            </button>
+
+            <button
+              className="action-button options-button"
+              onClick={handleShowOptions}
+              title="Дополнительные опции"
+            >
+              {PlayerIcons.more}
+            </button>
+          </div>
+        </div>
+
+        {/* Громкость */}
+        <div className="horizontal-volume">
+          <div className="player-panel">
+            <div className="volume-icon">
+              {PlayerIcons.volume}
+            </div>
+            <div
+              className="volume-slider"
+              ref={volumeBarRef}
+              onClick={handleVolumeUpdate}
+              onMouseDown={(e) => {
+                setIsDraggingVolume(true);
+                volumeBarRef.current.classList.add('dragging');
+                handleVolumeUpdate(e);
+              }}
+            >
+              <div className="volume-fill" style={{ width: `${volume}%` }}>
+                <div className="volume-handle" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Транскодирование overlay */}
+        {currentTrack?.isTranscoding && (
+          <div className="transcoding-overlay">
+            <div className="transcoding-container">
+              <div className="transcoding-label">Транскодирование...</div>
+              <div className="transcoding-progress-container">
+                <div
+                  className="transcoding-progress-bar"
+                  style={{ width: `${currentTrack.transcodingProgress || 0}%` }}
+                />
+              </div>
+              <div className="transcoding-percentage">
+                {currentTrack.transcodingProgress || 0}%
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+
+      {/* Полноэкранный режим */}
+      {isFullscreen && currentTrack && (
+        <FullscreenPlayer
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          togglePlayPause={togglePlayPause}
+          onPrevTrack={handlePrevTrack}
+          onNextTrack={handleNextTrack}
+          progress={progress}
+          volume={volume}
+          formatTime={formatTime}
+          currentTime={currentTime}
+          duration={duration}
+          onClose={toggleFullscreen}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+          isLoading={isLoading}
+        />
       )}
     </div>
-
-    {/* ───────── модальные окна ───────── */}
-    <AddToPlaylistModal
-      isOpen={showPlaylistModal && currentTrack !== null}
-      track={currentTrack}
-      playlists={playlists}
-      onClose={() => setShowPlaylistModal(false)}
-      onAddToPlaylists={addTrackToPlaylists}
-      onCreateNewPlaylist={(name, track) => createPlaylist(name, track)}
-    />
-
-    <OptionsModal
-      isOpen={showOptionsModal}
-      onClose={() => setShowOptionsModal(false)}
-      repeatMode={repeatMode}
-      onRepeatChange={setRepeatMode}
-      isCustomQueueActive={isCustomQueueActive}
-      onClearCustomQueue={clearCustomQueue}
-      currentTrack={currentTrack}
-      onShareTrack={handleShareTrack}
-      onOpenEqualizer={onOpenEqualizer}
-    />
-
-    <ShareModal
-      isOpen={showShareModal}
-      onClose={() => setShowShareModal(false)}
-      url={shareUrl}
-      trackTitle={currentTrack?.title}
-      trackAuthor={currentTrack?.uploader}
-      onCopy={copyToClipboard}
-      copySuccess={copySuccess}
-    />
-
-
-    {/* ───────── полноэкранный режим ───────── */}
-    {isFullscreen && currentTrack && (
-      <FullscreenPlayer
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        togglePlayPause={togglePlayPause}
-        onPrevTrack={handlePrevTrack}
-        onNextTrack={handleNextTrack}
-        progress={progress}
-        volume={volume}
-        formatTime={formatTime}
-        currentTime={currentTime}
-        duration={duration}
-        onClose={toggleFullscreen}
-        hasPrev={hasPrev}
-        hasNext={hasNext}
-        isLoading={isLoading}
-      />
-    )}
-  </div>
-);
+  );
 };
 
-export default MusicPlayer;
+export default HorizontalPlayer;

@@ -38,16 +38,14 @@ Download the latest release from the [Releases](https://github.com/MaimeD666/Mbl
 
 - **Frontend**: React 18.2, JavaScript ES6+
 - **Backend**: Python 3.9+ with Flask
-- **Desktop Framework**: Tauri 2.x (Rust)
 - **Audio Processing**: FFmpeg
-- **Build Tools**: Cargo, npm
+- **Build Tools**: npm
 
 ## Development
 
 ### Prerequisites
 
 - Node.js 16+
-- Rust 1.77.2+
 - Python 3.9+
 - Git
 
@@ -72,15 +70,6 @@ cd server && python app.py
 
 # Terminal 2: Frontend
 npm start
-
-# Terminal 3: Tauri app
-cd src-tauri && cargo tauri dev
-```
-
-4. Production build:
-```bash
-npm run build
-cd src-tauri && cargo tauri build
 ```
 
 ## Project Structure
@@ -90,7 +79,6 @@ MBlade/
 ├── src/                 # React frontend components
 ├── public/              # Static assets and resources
 ├── server/              # Python backend server
-├── src-tauri/           # Tauri desktop application
 └── package.json         # Project configuration
 ```
 

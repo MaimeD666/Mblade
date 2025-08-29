@@ -157,11 +157,51 @@ class MediaSessionService {
     }
 
     try {
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+      const newState = isPlaying ? 'playing' : 'paused';
+      console.log('[MediaSession] Обновление состояния:', {
+        old: navigator.mediaSession.playbackState,
+        new: newState,
+        isPlaying: isPlaying
+      });
+      
+      // Принудительно обновляем состояние
+      navigator.mediaSession.playbackState = newState;
       this.isPlaying = isPlaying;
-      console.log('[MediaSession] Состояние воспроизведения:', isPlaying ? 'playing' : 'paused');
+      
+      // Множественные попытки обновления для надежности
+      const retryUpdate = () => {
+        if (navigator.mediaSession.playbackState !== newState) {
+          console.log('[MediaSession] Повторное обновление состояния:', newState);
+          navigator.mediaSession.playbackState = newState;
+        }
+      };
+      
+      setTimeout(retryUpdate, 10);
+      setTimeout(retryUpdate, 50);
+      setTimeout(retryUpdate, 100);
+      
     } catch (error) {
       console.error('[MediaSession] Ошибка обновления состояния воспроизведения:', error);
+    }
+  }
+
+  /**
+   * Синхронизация состояния с текущим состоянием воспроизведения
+   */
+  syncPlaybackState(audioElement) {
+    if (!this.isSupported || !audioElement) {
+      return;
+    }
+
+    try {
+      const actualIsPlaying = !audioElement.paused;
+      if (this.isPlaying !== actualIsPlaying) {
+        navigator.mediaSession.playbackState = actualIsPlaying ? 'playing' : 'paused';
+        this.isPlaying = actualIsPlaying;
+        console.log('[MediaSession] Состояние синхронизировано с аудио элементом:', actualIsPlaying ? 'playing' : 'paused');
+      }
+    } catch (error) {
+      console.error('[MediaSession] Ошибка синхронизации состояния:', error);
     }
   }
 

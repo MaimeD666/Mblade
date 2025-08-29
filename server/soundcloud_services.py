@@ -936,6 +936,7 @@ def import_soundcloud_playlist(playlist_url, client_id):
         return {"success": False, "error": error_msg}
 
 def setup_soundcloud_routes(app, SOUNDCLOUD_SETTINGS_FILE, FFMPEG_DIR):
+    print("[SC] Setting up SoundCloud routes...")
     @app.route('/api/stream/soundcloud', methods=['GET'])
     def stream_soundcloud():
         track_id = request.args.get('id', '').strip()
@@ -1001,6 +1002,89 @@ def setup_soundcloud_routes(app, SOUNDCLOUD_SETTINGS_FILE, FFMPEG_DIR):
             return jsonify({"success": True})
         else:
             return jsonify({"error": "Failed to save Client ID"}), 500
+    
+    @app.route('/api/soundcloud/set-client-id', methods=['POST'])
+    def soundcloud_set_client_id():
+        """Alias for save-client-id endpoint for compatibility"""
+        data = request.json
+        if not data or 'client_id' not in data:
+            return jsonify({"error": "Client ID is required"}), 400
+        
+        client_id = data['client_id']
+        success = save_soundcloud_client_id(client_id, SOUNDCLOUD_SETTINGS_FILE)
+        
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"error": "Failed to save Client ID"}), 500
+    
+    @app.route('/api/soundcloud/check-auth', methods=['GET'])
+    def soundcloud_check_auth():
+        """Check if SoundCloud client ID is set and working"""
+        try:
+            client_id = get_soundcloud_client_id(SOUNDCLOUD_SETTINGS_FILE)
+            
+            if not client_id:
+                return jsonify({
+                    "is_authorized": False,
+                    "client_id_set": False,
+                    "message": "Client ID not set"
+                })
+            
+            # Test the client ID by making a simple API request
+            test_url = f"{SC_API_URL}/tracks"
+            test_params = {
+                'ids': '1',  # Test with a simple track ID
+                'client_id': client_id
+            }
+            
+            response = requests.get(test_url, params=test_params, headers=SC_HEADERS, timeout=5)
+            
+            if response.status_code == 200:
+                return jsonify({
+                    "is_authorized": True,
+                    "client_id_set": True,
+                    "message": "Client ID working"
+                })
+            elif response.status_code == 401:
+                return jsonify({
+                    "is_authorized": False,
+                    "client_id_set": True,
+                    "message": "Invalid Client ID"
+                })
+            else:
+                return jsonify({
+                    "is_authorized": False,
+                    "client_id_set": True,
+                    "message": f"API test failed with status {response.status_code}"
+                })
+                
+        except Exception as e:
+            print(f"[SC] Error checking auth: {e}")
+            return jsonify({
+                "is_authorized": False,
+                "client_id_set": bool(get_soundcloud_client_id(SOUNDCLOUD_SETTINGS_FILE)),
+                "message": f"Error checking authorization: {str(e)}"
+            }), 500
+    
+    @app.route('/api/soundcloud/reset-auth', methods=['POST'])
+    def soundcloud_reset_auth():
+        """Reset SoundCloud authorization by removing the client ID"""
+        try:
+            if os.path.exists(SOUNDCLOUD_SETTINGS_FILE):
+                os.remove(SOUNDCLOUD_SETTINGS_FILE)
+                print("[SC] Client ID file removed")
+            
+            return jsonify({
+                "success": True,
+                "message": "Authorization reset successfully"
+            })
+        except Exception as e:
+            print(f"[SC] Error resetting auth: {e}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
     
     @app.route('/api/soundcloud/get-track-info', methods=['GET'])
     def soundcloud_get_track_info():
@@ -1182,4 +1266,5 @@ def setup_soundcloud_routes(app, SOUNDCLOUD_SETTINGS_FILE, FFMPEG_DIR):
                 "error": str(e)
             }), 500
     
+    print("[SC] SoundCloud routes setup completed")
     return app

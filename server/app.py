@@ -7,6 +7,7 @@ from flask_cors import CORS
 
 import youtube_services
 import soundcloud_services
+import yandex_music_services
 import lyrics_services
 # import audio_analysis  # Temporarily disabled
 
@@ -104,6 +105,7 @@ os.makedirs(SETTINGS_DIR, exist_ok=True)
 print(f"[SE] Settings dir: {SETTINGS_DIR}")
 
 SOUNDCLOUD_SETTINGS_FILE = os.path.join(SETTINGS_DIR, "soundcloud_settings.json")
+YANDEX_MUSIC_SETTINGS_FILE = os.path.join(SETTINGS_DIR, "yandex_music_settings.json")
 
 def get_ffmpeg_path():
     system = platform.system().lower()
@@ -387,6 +389,7 @@ def search_all():
     results = {
         "youtube": [],
         "soundcloud": [],
+        "yandex_music": [],
         "vkmusic": []
     }
     
@@ -408,6 +411,15 @@ def search_all():
         error_msg = f"[SC] Error: {e}"
         print(error_msg)
         logger.error(f"SoundCloud search error for '{query}': {type(e).__name__}: {str(e)}")
+    
+    try:
+        start_ym = time.time()
+        results["yandex_music"] = yandex_music_services.search_yandex_music(query)
+        print(f"[YM] '{query}' in {time.time()-start_ym:.2f}s")
+    except Exception as e:
+        error_msg = f"[YM] Error: {e}"
+        print(error_msg)
+        logger.error(f"Yandex Music search error for '{query}': {type(e).__name__}: {str(e)}")
     
     results["vkmusic"] = []
     
@@ -839,6 +851,157 @@ def youtube_logout():
             "error": str(e)
         }), 500
 
+@app.route('/api/youtube/auth-redirect', methods=['GET'])
+def youtube_auth_redirect():
+    """
+    Запускает процесс интерактивной аутентификации YouTube
+    Открывает браузер для авторизации пользователя
+    """
+    try:
+        if not SELENIUM_AVAILABLE:
+            return '''
+            <html>
+                <head><title>YouTube Authentication</title></head>
+                <body>
+                    <h2>YouTube Authentication Error</h2>
+                    <p>Selenium is not installed. Please install selenium to use YouTube authentication:</p>
+                    <pre>pip install selenium webdriver-manager</pre>
+                    <p>After installation, restart the server and try again.</p>
+                    <script>setTimeout(() => window.close(), 5000);</script>
+                </body>
+            </html>
+            ''', 500
+        
+        def auth_thread():
+            try:
+                from chromedriver_manager import ensure_chromedriver_ready
+                
+                # Обеспечиваем готовность ChromeDriver
+                chromedriver_path = ensure_chromedriver_ready()
+                if not chromedriver_path:
+                    logger.error("ChromeDriver setup failed")
+                    return
+                
+                logger.info("Starting YouTube interactive authentication...")
+                
+                cookie_file = youtube_login_selenium(
+                    USER_DATA_DIR, 
+                    email=None, 
+                    password=None, 
+                    headless=False,  # Всегда показываем окно для интерактивной авторизации
+                    force_reauth=True
+                )
+                
+                if cookie_file:
+                    logger.info(f"YouTube authentication successful: {cookie_file}")
+                else:
+                    logger.error("YouTube authentication failed")
+                    
+            except Exception as e:
+                logger.error(f"Error during YouTube authentication thread: {e}")
+        
+        # Запускаем аутентификацию в отдельном потоке
+        thread = threading.Thread(target=auth_thread, daemon=True)
+        thread.start()
+        
+        # Возвращаем HTML страницу с инструкциями для пользователя
+        return '''
+        <html>
+            <head>
+                <title>YouTube Authentication</title>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+                    .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }
+                    h2 { color: #d73502; margin-bottom: 20px; }
+                    .step { margin: 15px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+                    .warning { background: #fff3cd; border-left-color: #ffc107; color: #856404; }
+                    .success { background: #d4edda; border-left-color: #28a745; color: #155724; }
+                    button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 10px 5px; }
+                    button:hover { background: #0056b3; }
+                    .status { margin-top: 20px; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h2>🔐 YouTube Authentication</h2>
+                    
+                    <div class="step">
+                        <strong>Step 1:</strong> A Chrome browser window should open automatically for Google login.
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Step 2:</strong> Log into your Google account in that window.
+                    </div>
+                    
+                    <div class="step warning">
+                        <strong>⚠️ Important:</strong> Do NOT close the browser window manually. The system will detect when login is complete and close it automatically.
+                    </div>
+                    
+                    <div class="step success">
+                        <strong>✅ After successful login:</strong> You can close this tab and return to the application.
+                    </div>
+                    
+                    <div class="status" id="status">
+                        🔄 Authentication process started...
+                    </div>
+                    
+                    <button onclick="window.close()">Close This Tab</button>
+                    <button onclick="checkStatus()">Check Status</button>
+                </div>
+                
+                <script>
+                    let checkCount = 0;
+                    
+                    function checkStatus() {
+                        fetch('/api/youtube/auth-status')
+                            .then(response => response.json())
+                            .then(data => {
+                                const statusEl = document.getElementById('status');
+                                if (data.authenticated) {
+                                    statusEl.innerHTML = '✅ Authentication successful! You can now close this tab.';
+                                    statusEl.style.color = '#28a745';
+                                } else {
+                                    statusEl.innerHTML = '🔄 Authentication in progress...';
+                                    statusEl.style.color = '#007bff';
+                                }
+                            })
+                            .catch(error => {
+                                document.getElementById('status').innerHTML = '❌ Error checking status';
+                            });
+                    }
+                    
+                    // Проверяем статус каждые 5 секунд
+                    setInterval(() => {
+                        checkCount++;
+                        checkStatus();
+                        
+                        // Останавливаем через 10 минут
+                        if (checkCount > 120) {
+                            document.getElementById('status').innerHTML = '⏰ Timeout reached. Please try again if needed.';
+                        }
+                    }, 5000);
+                    
+                    // Первоначальная проверка через 3 секунды
+                    setTimeout(checkStatus, 3000);
+                </script>
+            </body>
+        </html>
+        '''
+        
+    except Exception as e:
+        logger.error(f"Error starting YouTube authentication: {e}")
+        return f'''
+        <html>
+            <head><title>YouTube Authentication Error</title></head>
+            <body>
+                <h2>Authentication Error</h2>
+                <p>Error: {str(e)}</p>
+                <script>setTimeout(() => window.close(), 5000);</script>
+            </body>
+        </html>
+        ''', 500
+
 @app.route('/api/selenium/status', methods=['GET'])
 def selenium_status():
     try:
@@ -898,7 +1061,7 @@ def clear_all_data():
             SAVED_TRACKS_FILE,
             COOKIE_FILE,
             SOUNDCLOUD_SETTINGS_FILE,
-            FIREBASE_CONFIG_FILE,
+            YANDEX_MUSIC_SETTINGS_FILE,
             os.path.join(SETTINGS_DIR, "theme_settings.json")
         ]
         
@@ -1210,6 +1373,11 @@ def export_all_data():
             with open(SOUNDCLOUD_SETTINGS_FILE, 'r', encoding='utf-8') as f:
                 soundcloud_settings = json.load(f)
         
+        yandex_music_settings = {}
+        if os.path.exists(YANDEX_MUSIC_SETTINGS_FILE):
+            with open(YANDEX_MUSIC_SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                yandex_music_settings = json.load(f)
+        
         export_data = {
             "export_version": "1.0",
             "export_timestamp": time.time(),
@@ -1217,7 +1385,8 @@ def export_all_data():
             "liked_tracks": playlists_data.get('liked_tracks', []),
             "saved_tracks": saved_tracks_data.get('saved_tracks', []),
             "theme_settings": theme_settings,
-            "soundcloud_settings": soundcloud_settings
+            "soundcloud_settings": soundcloud_settings,
+            "yandex_music_settings": yandex_music_settings
         }
         
         return jsonify({
@@ -1262,6 +1431,10 @@ def import_all_data():
         if import_data.get('soundcloud_settings'):
             with open(SOUNDCLOUD_SETTINGS_FILE, 'w', encoding='utf-8') as f:
                 json.dump(import_data['soundcloud_settings'], f, ensure_ascii=False, indent=2)
+        
+        if import_data.get('yandex_music_settings'):
+            with open(YANDEX_MUSIC_SETTINGS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(import_data['yandex_music_settings'], f, ensure_ascii=False, indent=2)
         
         return jsonify({
             "success": True,
@@ -1333,6 +1506,7 @@ if __name__ == "__main__":
         
         app = youtube_services.setup_youtube_routes(app, FFMPEG_DIR, COOKIE_FILE, CACHE_DIR, SAVED_DIR, load_saved_tracks)
         app = soundcloud_services.setup_soundcloud_routes(app, SOUNDCLOUD_SETTINGS_FILE, FFMPEG_DIR)
+        app = yandex_music_services.setup_yandex_music_routes(app, YANDEX_MUSIC_SETTINGS_FILE)
         # app = audio_analysis.setup_analysis_routes(app, USER_DATA_DIR, load_playlists)  # Temporarily disabled
         
         threading.Thread(target=clean_cache, daemon=True).start()

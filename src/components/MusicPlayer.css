@@ -5,18 +5,9 @@
   top: 40px;
   width: 252px;
   z-index: 10;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Горизонтальный режим плеера - занимает место навигации */
-html.horizontal-mode .music-player {
-  height: 104px;
-  left: 355px;
-  position: absolute;
-  top: 936px;
-  width: 1489px;
-  z-index: 10;
-}
 
 .overlap-group {
   background-color: var(--secondary-bg);
@@ -25,17 +16,9 @@ html.horizontal-mode .music-player {
   position: relative;
   width: 250px;
   overflow: hidden;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html.horizontal-mode .overlap-group {
-  background-color: var(--secondary-bg);
-  border-radius: 31px;
-  height: 104px;
-  position: relative;
-  width: 1489px;
-  overflow: hidden;
-}
 
 .play-stop,
 .prewious-track,
@@ -50,7 +33,7 @@ html.horizontal-mode .overlap-group {
   align-items: center;
   justify-content: center;
   position: absolute;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
   box-shadow: var(--button-shadow);
   overflow: hidden;
   z-index: 2;
@@ -157,7 +140,7 @@ html.horizontal-mode .overlap-group {
   height: 100%;
   background: radial-gradient(circle, rgba(var(--active-accent-rgb, 210, 82, 244), 0.7) 0%, rgba(var(--accent-color-rgb, 189, 99, 212), 0) 70%);
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transition: opacity 0.25s ease;
   z-index: -1;
   transform: scale(1.2);
   border-radius: inherit;
@@ -175,7 +158,7 @@ html.horizontal-mode .overlap-group {
 .additional:hover .button-glow,
 .addtoplaylist:hover .button-glow {
   opacity: 0.8;
-  animation: pulse-glow 2s infinite ease-in-out;
+  animation: pulse-glow 1s infinite ease-in-out;
 }
 
 @keyframes pulse-glow {
@@ -183,12 +166,10 @@ html.horizontal-mode .overlap-group {
     opacity: 0.4;
     transform: scale(1.2);
   }
-
   50% {
     opacity: 0.8;
-    transform: scale(1.4);
+    transform: scale(1.35);
   }
-
   100% {
     opacity: 0.4;
     transform: scale(1.2);
@@ -196,18 +177,16 @@ html.horizontal-mode .overlap-group {
 }
 
 .play-stop.pulse {
-  animation: button-pulse 0.3s ease-out;
+  animation: button-pulse 0.15s ease-out;
 }
 
 @keyframes button-pulse {
   0% {
     transform: scale(1);
   }
-
   50% {
     transform: scale(0.95);
   }
-
   100% {
     transform: scale(1);
   }
@@ -215,7 +194,7 @@ html.horizontal-mode .overlap-group {
 
 .track-image {
   background-color: rgba(217, 217, 217, 0.3);
-  border-radius: 21px;
+  border-radius: 24px;
   height: 170px;
   left: 40px;
   position: absolute;
@@ -223,20 +202,21 @@ html.horizontal-mode .overlap-group {
   width: 170px;
   overflow: hidden;
   box-shadow: var(--card-shadow);
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
 }
 
 .track-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  object-position: center;
+  transition: transform 0.25s ease;
+  display: block;
+  border-radius: inherit;
 }
 
 .track-image:hover img {
@@ -245,14 +225,14 @@ html.horizontal-mode .overlap-group {
 
 .track-image-empty {
   position: relative;
-  animation: pulse-background 3s infinite alternate ease-in-out;
+  animation: pulse-background 2s infinite alternate ease-in-out;
 }
 
 .track-image-empty::before {
   content: '♫';
   font-size: 80px;
   color: var(--accent-color);
-  animation: float 3s infinite ease-in-out;
+  animation: float 2s infinite ease-in-out;
   position: absolute;
   opacity: 0.7;
 }
@@ -266,8 +246,8 @@ html.horizontal-mode .overlap-group {
   bottom: 0;
   background-color: rgba(var(--accent-color-rgb, 189, 99, 212), 0.15);
   opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 21px;
+  transition: opacity 0.15s ease;
+  border-radius: inherit;
 }
 
 .track-image:hover::after {
@@ -288,11 +268,9 @@ html.horizontal-mode .overlap-group {
   0% {
     transform: translateY(0) scale(1);
   }
-
   50% {
-    transform: translateY(-10px) scale(1.1);
+    transform: translateY(-8px) scale(1.08);
   }
-
   100% {
     transform: translateY(0) scale(1);
   }
@@ -314,7 +292,7 @@ html.horizontal-mode .overlap-group {
       rgba(var(--active-accent-rgb, 210, 82, 244), 0.3),
       rgba(var(--control-bg-rgb, 189, 99, 212), 0.2));
   z-index: 2;
-  animation: loading-shimmer 1.5s infinite linear;
+  animation: loading-shimmer 0.8s infinite linear;
 }
 
 .track-image-loading img {
@@ -329,24 +307,22 @@ html.horizontal-mode .overlap-group {
   border-radius: 50%;
   border-top-color: var(--text-color);
   z-index: 3;
-  animation: spinner 1s infinite linear;
+  animation: player-spinner 0.6s infinite linear;
 }
 
 @keyframes loading-shimmer {
   0% {
     transform: translateX(-100%);
   }
-
   100% {
     transform: translateX(100%);
   }
 }
 
-@keyframes spinner {
+@keyframes player-spinner {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -368,7 +344,7 @@ html.horizontal-mode .overlap-group {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .text-wrapper:hover {
@@ -399,12 +375,12 @@ html.horizontal-mode .overlap-group {
       rgba(var(--control-bg-rgb, 189, 99, 212), 0),
       rgba(var(--active-accent-rgb, 210, 82, 244), 0.3),
       rgba(var(--control-bg-rgb, 189, 99, 212), 0));
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 0.8s infinite;
 }
 
 .text-wrapper.empty {
   color: var(--text-color-secondary);
-  animation: pulse-text 2s infinite alternate;
+  animation: pulse-text 1.5s infinite alternate;
 }
 
 @keyframes pulse-text {
@@ -421,7 +397,6 @@ html.horizontal-mode .overlap-group {
   0% {
     transform: translateX(-100%);
   }
-
   100% {
     transform: translateX(100%);
   }
@@ -443,7 +418,7 @@ html.horizontal-mode .overlap-group {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .track-author:hover {
@@ -472,13 +447,13 @@ html.horizontal-mode .overlap-group {
       rgba(var(--control-bg-rgb, 189, 99, 212), 0),
       rgba(var(--active-accent-rgb, 210, 82, 244), 0.2),
       rgba(var(--control-bg-rgb, 189, 99, 212), 0));
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 0.8s infinite;
   animation-delay: 0.2s;
 }
 
 .track-author.empty {
   color: var(--text-color-tertiary);
-  animation: pulse-text 2s infinite alternate;
+  animation: pulse-text 1.5s infinite alternate;
   animation-delay: 0.5s;
 }
 
@@ -498,7 +473,7 @@ html.horizontal-mode .overlap-group {
   cursor: pointer;
   padding: 3px;
   overflow: visible;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.15s ease;
 }
 
 .overlap:hover {
@@ -516,7 +491,7 @@ html.horizontal-mode .overlap-group {
   font-family: "Secular One-Regular", Helvetica;
   font-size: 12px;
   color: var(--text-color-secondary);
-  transition: color 0.3s ease;
+  transition: color 0.15s ease;
 }
 
 .current-time,
@@ -555,7 +530,7 @@ html.horizontal-mode .overlap-group {
   box-shadow: var(--progress-knob-shadow);
   z-index: 30;
   opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.1s ease, transform 0.1s ease;
 }
 
 .progress-knob-pulse {
@@ -566,7 +541,7 @@ html.horizontal-mode .overlap-group {
   background-color: rgba(var(--progress-knob-color-rgb, 100, 224, 255), 0.6);
   transform: scale(0);
   opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .overlap:hover .progress-knob {
@@ -575,7 +550,7 @@ html.horizontal-mode .overlap-group {
 }
 
 .overlap:hover .progress-knob-pulse {
-  animation: knob-pulse 1.5s infinite;
+  animation: knob-pulse 0.8s infinite;
 }
 
 @keyframes knob-pulse {
@@ -583,12 +558,10 @@ html.horizontal-mode .overlap-group {
     transform: scale(1);
     opacity: 0.6;
   }
-
   70% {
-    transform: scale(2);
+    transform: scale(1.8);
     opacity: 0;
   }
-
   100% {
     transform: scale(1);
     opacity: 0;
@@ -611,7 +584,7 @@ html.horizontal-mode .overlap-group {
   cursor: pointer;
   padding: 3px;
   overflow: visible;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.15s ease;
 }
 
 .volume-wrapper:hover {
@@ -644,7 +617,7 @@ html.horizontal-mode .overlap-group {
   box-shadow: var(--progress-knob-shadow);
   z-index: 30;
   opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.1s ease, transform 0.1s ease;
 }
 
 .volume-knob-pulse {
@@ -655,7 +628,7 @@ html.horizontal-mode .overlap-group {
   background-color: rgba(var(--progress-knob-color-rgb, 100, 224, 255), 0.6);
   transform: scale(0);
   opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .volume-wrapper:hover .volume-knob {
@@ -664,7 +637,7 @@ html.horizontal-mode .overlap-group {
 }
 
 .volume-wrapper:hover .volume-knob-pulse {
-  animation: knob-pulse 1.5s infinite;
+  animation: knob-pulse 0.8s infinite;
 }
 
 .play-icon {
@@ -673,12 +646,12 @@ html.horizontal-mode .overlap-group {
   justify-content: center;
   width: 100%;
   height: 100%;
-  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 
 .play-stop.is-playing .play-icon {
-  animation: icon-flip 0.4s ease-out;
+  animation: icon-flip 0.2s ease-out;
 }
 
 .play-stop.pause-ripple::after {
@@ -693,7 +666,7 @@ html.horizontal-mode .overlap-group {
   border-radius: 50%;
   transform: translate(-50%, -50%) scale(0);
   opacity: 0.7;
-  animation: ripple-effect 0.6s ease-out forwards;
+  animation: ripple-effect 0.3s ease-out forwards;
 }
 
 .play-stop.pause-ripple::before {
@@ -708,7 +681,7 @@ html.horizontal-mode .overlap-group {
   border-radius: 50%;
   transform: translate(-50%, -50%) scale(0);
   opacity: 0.5;
-  animation: ripple-effect 0.6s ease-out 0.1s forwards;
+  animation: ripple-effect 0.3s ease-out 0.05s forwards;
 }
 
 @keyframes ripple-effect {
@@ -717,7 +690,7 @@ html.horizontal-mode .overlap-group {
     opacity: 0.7;
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.8);
+    transform: translate(-50%, -50%) scale(1.6);
     opacity: 0;
   }
 }
@@ -726,11 +699,9 @@ html.horizontal-mode .overlap-group {
   0% {
     transform: scale(1);
   }
-
   50% {
-    transform: scale(0);
+    transform: scale(0.1);
   }
-
   100% {
     transform: scale(1);
   }
@@ -748,14 +719,13 @@ html.horizontal-mode .overlap-group {
   justify-content: center;
   z-index: 100;
   border-radius: 63px;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
@@ -790,7 +760,7 @@ html.horizontal-mode .overlap-group {
   height: 100%;
   background: var(--progress-bar-bg);
   border-radius: 10px;
-  transition: width 0.3s ease;
+  transition: width 0.15s ease;
 }
 
 .transcoding-percentage {
@@ -811,7 +781,7 @@ html.horizontal-mode .overlap-group {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.2s ease;
 }
 
 .modal-content {
@@ -820,15 +790,14 @@ html.horizontal-mode .overlap-group {
   width: 400px;
   padding: 30px;
   box-shadow: var(--modal-shadow);
-  animation: modalAppear 0.4s ease;
+  animation: modalAppear 0.2s ease;
 }
 
 @keyframes modalAppear {
   from {
-    transform: scale(0.8);
+    transform: scale(0.9);
     opacity: 0;
   }
-
   to {
     transform: scale(1);
     opacity: 1;
@@ -862,7 +831,7 @@ html.horizontal-mode .overlap-group {
   font-family: "Secular One-Regular", Helvetica;
   font-size: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
   width: 45%;
   text-align: center;
 }
@@ -950,7 +919,7 @@ html.horizontal-mode .overlap-group {
   border-radius: 10px;
   margin-bottom: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .playlist-selection-item:hover {
@@ -994,7 +963,7 @@ html.horizontal-mode .overlap-group {
   border-radius: 15px;
   margin-bottom: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .create-new-playlist-option:hover {
@@ -1050,7 +1019,7 @@ html.horizontal-mode .overlap-group {
   font-family: "Secular One-Regular", Helvetica;
   font-size: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
   background-color: rgba(var(--accent-color-rgb, 181, 58, 212), 0.3);
   padding: 10px 15px;
   border-radius: 20px;
@@ -1072,18 +1041,16 @@ html.horizontal-mode .overlap-group {
 
 @keyframes bubble-float {
   0% {
-    transform: translate(-50%, -50%) scale(0.95);
-    box-shadow: 0 0 30px rgba(var(--active-accent-rgb, 210, 82, 244), 0.4);
+    transform: translate(-50%, -50%) scale(0.96);
+    box-shadow: 0 0 25px rgba(var(--active-accent-rgb, 210, 82, 244), 0.4);
   }
-
   50% {
-    transform: translate(-50%, -50%) scale(1.05);
-    box-shadow: 0 0 50px rgba(var(--active-accent-rgb, 210, 82, 244), 0.6);
+    transform: translate(-50%, -50%) scale(1.04);
+    box-shadow: 0 0 40px rgba(var(--active-accent-rgb, 210, 82, 244), 0.6);
   }
-
   100% {
-    transform: translate(-50%, -50%) scale(0.95);
-    box-shadow: 0 0 30px rgba(var(--active-accent-rgb, 210, 82, 244), 0.4);
+    transform: translate(-50%, -50%) scale(0.96);
+    box-shadow: 0 0 25px rgba(var(--active-accent-rgb, 210, 82, 244), 0.4);
   }
 }
 
@@ -1096,7 +1063,7 @@ html.horizontal-mode .overlap-group {
   height: 200px;
   background: linear-gradient(135deg, var(--accent-color), var(--secondary-bg));
   border-radius: 50%;
-  animation: bubble-float 6s infinite ease-in-out;
+  animation: bubble-float 4s infinite ease-in-out;
   z-index: 10;
   display: flex;
   align-items: center;
@@ -1128,10 +1095,9 @@ html.horizontal-mode .overlap-group {
 @keyframes fadeInElement {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(10px);
     visibility: hidden;
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1140,70 +1106,70 @@ html.horizontal-mode .overlap-group {
 }
 
 .first-track-loaded .text-wrapper {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.1s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.05s;
 }
 
 .first-track-loaded .track-author {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.2s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.1s;
 }
 
 .first-track-loaded .overlap {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.3s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.15s;
 }
 
 .first-track-loaded .time-display {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.35s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.175s;
 }
 
 .first-track-loaded .volume-wrapper {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.4s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.2s;
 }
 
 .first-track-loaded .play-stop {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.45s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.225s;
 }
 
 .first-track-loaded .prewious-track {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.5s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.25s;
 }
 
 .first-track-loaded .next-track {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.55s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.275s;
 }
 
 .first-track-loaded .download {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.6s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.3s;
 }
 
 .first-track-loaded .like {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.65s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.325s;
 }
 
 .first-track-loaded .additional {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.7s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.35s;
 }
 
 .first-track-loaded .addtoplaylist {
-  animation: fadeInElement 0.5s forwards;
-  animation-delay: 0.75s;
+  animation: fadeInElement 0.3s forwards;
+  animation-delay: 0.375s;
 }
 
 .track-image-empty {
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, var(--secondary-bg), var(--accent-color));
-  animation: bubble-pulse 4s infinite alternate ease-in-out;
+  animation: bubble-pulse 2.5s infinite alternate ease-in-out;
 }
 
 @keyframes bubble-pulse {
@@ -1220,7 +1186,7 @@ html.horizontal-mode .overlap-group {
 
 .player-empty .track-image {
   transform: scale(1.1);
-  transition: transform 0.5s ease;
+  transition: transform 0.25s ease;
 }
 
 .player-empty .text-wrapper.empty,
@@ -1247,7 +1213,7 @@ html.horizontal-mode .overlap-group {
   border-radius: 12px;
   margin-bottom: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .option-item:hover {
@@ -1288,7 +1254,7 @@ html.horizontal-mode .overlap-group {
 }
 
 .additional.repeat-active {
-  animation: repeat-pulse 2s infinite alternate;
+  animation: repeat-pulse 1.2s infinite alternate;
 }
 
 @keyframes repeat-pulse {
@@ -1317,475 +1283,35 @@ html.horizontal-mode .overlap-group {
   display: none;
 }
 
-/* Горизонтальный режим - классическая компоновка в ряд */
-
-/* Кнопка "предыдущий" - первая в ряду */
-html.horizontal-mode .prewious-track {
-  height: 60px;
-  width: 60px;
-  left: 30px;
-  top: 22px;
-  border-radius: 23px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* Специфичные стили для вертикального плеера (когда НЕ активен horizontal-mode) */
+html:not(.horizontal-mode) .music-player .track-image {
+  height: 170px !important;
+  width: 170px !important;
+  max-width: 170px;
+  max-height: 170px;
+  min-width: 170px;
+  min-height: 170px;
+  left: 40px !important;
+  top: 88px !important;
 }
 
-/* Основная кнопка play/pause - вторая в ряду */
-html.horizontal-mode .play-stop {
-  height: 70px;
-  width: 70px;
-  left: 105px;
-  top: 17px;
-  border-radius: 23px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+html:not(.horizontal-mode) .music-player .track-image img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 170px !important;
+  max-height: 170px !important;
+  object-fit: cover !important;
+  border-radius: inherit;
+  transition: transform 0.25s ease !important;
 }
 
-/* Кнопка "следующий" - третья в ряду */
-html.horizontal-mode .next-track {
-  height: 60px;
-  width: 60px;
-  left: 190px;
-  top: 22px;
-  border-radius: 23px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* Исправляем анимацию hover для вертикального плеера */
+html:not(.horizontal-mode) .music-player .track-image:hover img {
+  transform: scale(1.05) !important;
 }
 
-/* Изображение трека */
-html.horizontal-mode .track-image {
-  height: 64px;
-  left: 280px;
-  position: absolute;
-  top: 20px;
-  width: 64px;
-  border-radius: 21px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* Дополнительное правило для наследования радиуса в вертикальном плеере */
+.music-player .track-image img {
+  border-radius: inherit;
 }
 
-/* Информация о треке */
-html.horizontal-mode .text-wrapper {
-  font-size: 16px;
-  height: 20px;
-  left: 360px;
-  top: 28px;
-  width: 280px;
-  text-align: left;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-html.horizontal-mode .track-author {
-  font-size: 14px;
-  height: 16px;
-  left: 360px;
-  top: 52px;
-  width: 280px;
-  text-align: left;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Слайдер прогресса - центрированный */
-html.horizontal-mode .overlap {
-  background-color: var(--slider-bg);
-  border-radius: 12px;
-  height: 17px;
-  left: 660px;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 400px;
-  cursor: pointer;
-  padding: 3px;
-  overflow: visible;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-html.horizontal-mode .time-display {
-  display: flex;
-  justify-content: space-between;
-  position: absolute;
-  top: 50%;
-  transform: translateY(100%);
-  left: 660px;
-  width: 400px;
-  font-family: "Secular One-Regular", Helvetica;
-  font-size: 12px;
-  color: var(--text-color-secondary);
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  margin-top: 8px;
-}
-
-/* Кнопки действий в ряду справа */
-html.horizontal-mode .like {
-  height: 50px;
-  width: 50px;
-  left: 1090px;
-  top: 27px;
-  border-radius: 23px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-html.horizontal-mode .addtoplaylist {
-  height: 50px;
-  width: 50px;
-  left: 1155px;
-  top: 27px;
-  border-radius: 23px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-html.horizontal-mode .download {
-  height: 50px;
-  width: 50px;
-  left: 1220px;
-  top: 27px;
-  border-radius: 23px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-html.horizontal-mode .additional {
-  height: 50px;
-  width: 50px;
-  left: 1285px;
-  top: 27px;
-  border-radius: 23px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Контейнер слайдера громкости - горизонтальный с иконкой */
-html.horizontal-mode .volume-wrapper {
-  display: flex;
-  align-items: center;
-  background-color: transparent;
-  height: 60px;
-  left: 1360px;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 120px;
-  cursor: pointer;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Иконка громкости */
-html.horizontal-mode .volume-wrapper::before {
-  content: '';
-  width: 20px;
-  height: 20px;
-  margin-right: 8px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  flex-shrink: 0;
-}
-
-/* Горизонтальный слайдер громкости - упрощенный */
-html.horizontal-mode .volume-wrapper .volume-slider-horizontal {
-  background-color: var(--slider-bg);
-  border-radius: 12px;
-  height: 17px;
-  width: 80px;
-  cursor: pointer;
-  padding: 3px;
-  overflow: visible;
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-/* Горизонтальная полоса громкости */
-html.horizontal-mode .volume-slider-horizontal .volume {
-  background: var(--volume-bar-bg);
-  border-radius: 8px;
-  height: 11px;
-  position: relative;
-  transition: none;
-  box-shadow: 0 0 8px var(--progress-knob-shadow);
-}
-
-/* Ручка горизонтального слайдера громкости */
-html.horizontal-mode .volume-slider-horizontal .volume-knob {
-  width: 18px;
-  height: 18px;
-  background-color: var(--progress-knob-color);
-  border: 2px solid var(--text-color);
-  border-radius: 50%;
-  position: absolute;
-  right: -9px;
-  top: 50%;
-  transform: translateY(-50%);
-  box-shadow: var(--progress-knob-shadow);
-  z-index: 30;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* Иконки в горизонтальном режиме */
-html.horizontal-mode .play-stop svg {
-  width: 28px;
-  height: 28px;
-}
-
-html.horizontal-mode .prewious-track svg,
-html.horizontal-mode .next-track svg {
-  width: 20px;
-  height: 20px;
-}
-
-html.horizontal-mode .download svg,
-html.horizontal-mode .like svg,
-html.horizontal-mode .additional svg,
-html.horizontal-mode .addtoplaylist svg {
-  width: 22px;
-  height: 22px;
-}
-
-/* Исправление направления иконок prev/next для горизонтального режима */
-html.horizontal-mode .prewious-track svg {
-  transform: rotate(90deg);
-}
-
-html.horizontal-mode .next-track svg {
-  transform: rotate(-90deg);
-}
-
-/* Улучшение прогресс-бара в горизонтальном режиме */
-html.horizontal-mode .time-progress-bar {
-  background: var(--progress-bar-bg);
-  border-radius: 8px;
-  height: 11px;
-  position: relative;
-  transition: width 0.2s ease;
-  box-shadow: 0 0 8px var(--progress-knob-shadow);
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-html.horizontal-mode .progress-knob {
-  width: 18px;
-  height: 18px;
-  background-color: var(--progress-knob-color);
-  border: 2px solid var(--text-color);
-  border-radius: 50%;
-  position: absolute;
-  right: -9px;
-  top: 50%;
-  transform: translateY(-50%);
-  box-shadow: var(--progress-knob-shadow);
-  z-index: 30;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-html.horizontal-mode .overlap:hover .progress-knob,
-html.horizontal-mode .volume-slider-horizontal:hover .volume-knob {
-  opacity: 1;
-}
-
-html.horizontal-mode .overlap:hover .progress-knob {
-  transform: translateY(-50%) scale(1.1);
-}
-
-html.horizontal-mode .volume-slider-horizontal:hover .volume-knob {
-  transform: translateY(-50%) scale(1.1);
-}
-
-/* Ховер для горизонтального слайдера громкости */
-html.horizontal-mode .volume-slider-horizontal:hover {
-  background-color: var(--slider-bg);
-  opacity: 0.8;
-}
-
-/* Дополнительные стили для улучшения горизонтального плеера */
-html.horizontal-mode .overlap-group {
-  display: flex;
-  align-items: center;
-  position: relative;
-  background: var(--secondary-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Оставляем только оригинальные ховер-эффекты для горизонтального режима */
-html.horizontal-mode .play-stop:hover,
-html.horizontal-mode .prewious-track:hover:not(.disabled),
-html.horizontal-mode .next-track:hover:not(.disabled),
-html.horizontal-mode .download:hover:not(.disabled),
-html.horizontal-mode .like:hover,
-html.horizontal-mode .additional:hover,
-html.horizontal-mode .addtoplaylist:hover {
-  background-color: var(--button-hover);
-  box-shadow: var(--modal-shadow);
-}
-
-html.horizontal-mode .play-stop:active,
-html.horizontal-mode .prewious-track:active:not(.disabled),
-html.horizontal-mode .next-track:active:not(.disabled),
-html.horizontal-mode .download:active:not(.disabled),
-html.horizontal-mode .like:active,
-html.horizontal-mode .additional:active,
-html.horizontal-mode .addtoplaylist:active {
-  box-shadow: var(--button-shadow);
-}
-
-/* Плавные тени для горизонтального режима */
-html.horizontal-mode .music-player {
-  box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
-  animation: playerHorizontalTransition 0.5s ease-out;
-}
-
-@keyframes playerHorizontalTransition {
-  0% {
-    opacity: 0.7;
-    transform: translateY(50px) scale(0.9);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Медиа-запросы для горизонтального плеера */
-@media screen and (max-width: 1600px) {
-  html.horizontal-mode .music-player {
-    width: 1441px;
-  }
-
-  html.horizontal-mode .overlap-group {
-    width: 1441px;
-  }
-
-  html.horizontal-mode .overlap {
-    width: 380px;
-    left: 620px;
-  }
-
-  html.horizontal-mode .time-display {
-    width: 380px;
-    left: 620px;
-  }
-
-  html.horizontal-mode .like {
-    left: 1020px;
-  }
-
-  html.horizontal-mode .addtoplaylist {
-    left: 1085px;
-  }
-
-  html.horizontal-mode .download {
-    left: 1150px;
-  }
-
-  html.horizontal-mode .additional {
-    left: 1215px;
-  }
-
-  html.horizontal-mode .volume-wrapper {
-    left: 1290px;
-    width: 100px;
-  }
-}
-
-@media screen and (max-width: 1400px) {
-  html.horizontal-mode .music-player {
-    width: 1241px;
-  }
-
-  html.horizontal-mode .overlap-group {
-    width: 1241px;
-  }
-
-  html.horizontal-mode .text-wrapper {
-    width: 280px;
-  }
-
-  html.horizontal-mode .track-author {
-    width: 280px;
-  }
-
-  html.horizontal-mode .overlap {
-    width: 320px;
-    left: 580px;
-  }
-
-  html.horizontal-mode .time-display {
-    width: 320px;
-    left: 580px;
-  }
-
-  html.horizontal-mode .like {
-    left: 920px;
-  }
-
-  html.horizontal-mode .addtoplaylist {
-    left: 985px;
-  }
-
-  html.horizontal-mode .download {
-    left: 1050px;
-  }
-
-  html.horizontal-mode .additional {
-    left: 1115px;
-  }
-
-  html.horizontal-mode .volume-wrapper {
-    left: 1190px;
-    width: 100px;
-  }
-}
-
-@media screen and (max-width: 1200px) {
-  html.horizontal-mode .music-player {
-    width: 1041px;
-  }
-
-  html.horizontal-mode .overlap-group {
-    width: 1041px;
-  }
-
-  html.horizontal-mode .text-wrapper {
-    width: 220px;
-    font-size: 16px;
-  }
-
-  html.horizontal-mode .track-author {
-    width: 220px;
-    font-size: 13px;
-  }
-
-  html.horizontal-mode .overlap {
-    width: 280px;
-    left: 520px;
-  }
-
-  html.horizontal-mode .time-display {
-    width: 280px;
-    left: 520px;
-  }
-
-  html.horizontal-mode .like {
-    left: 820px;
-  }
-
-  html.horizontal-mode .addtoplaylist {
-    left: 885px;
-  }
-
-  html.horizontal-mode .download {
-    left: 950px;
-  }
-
-  html.horizontal-mode .additional {
-    left: 1015px;
-  }
-
-  html.horizontal-mode .volume-wrapper {
-    left: 1090px;
-    width: 90px;
-    height: 60px;
-  }
-
-  html.horizontal-mode .volume-slider-horizontal {
-    width: 60px;
-  }
-}

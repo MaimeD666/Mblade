@@ -43,6 +43,15 @@ const Component = ({
             </svg>
           </div>
         );
+      case 'yandex_music':
+        return (
+          <div className="platform-icon yandex-music">
+            <svg viewBox="0 0 48 48" fill="currentColor">
+              <path fill="#212121" d="M24.001,44.001c11.045,0,20-8.955,20-20s-8.955-20-20-20    c-11.045,0-20,8.955-20,20S12.956,44.001,24.001,44.001z"></path>
+              <path fill="#fcbe2d" d="M39.2,20.019l-0.129-0.607l-5.097-0.892l2.968-4.021    L36.6,14.104l-4.364,2.104l0.552-5.573l-0.447-0.261l-2.655,4.52l-2.971-6.728h-0.524l0.709,6.491l-7.492-6.019l-0.631,0.184    l5.757,7.281l-11.407-3.812l-0.527,0.58L22.8,18.705L8.739,19.887l-0.157,0.868l14.612,1.601L10.999,32.504l0.527,0.708    l14.508-7.937l-2.864,13.984h0.868l5.569-13.168L33,36.392l0.603-0.473L32.212,25.46l5.28,6.019l0.341-0.555l-4.045-7.463    l5.649,2.103l0.053-0.631l-5.072-3.76L39.2,20.019z"></path>
+            </svg>
+          </div>
+        );
       case 'vkmusic':
         return (
           <div className="platform-icon vkmusic">
@@ -90,7 +99,7 @@ const Component = ({
       </div>
 
       <div className="card-author">
-        {track ? track.uploader : 'Author'}
+        {track ? (track.uploader || track.artist) : 'Author'}
       </div>
 
       <div className="card-footer">

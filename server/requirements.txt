@@ -2,6 +2,7 @@ flask
 flask-cors
 yt-dlp
 requests
+yandex-music
 laion-clap
 librosa
 torch

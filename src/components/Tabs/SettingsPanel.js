@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './SettingsPanel.css';
+import '../AuthenticationPanel.css';
 import ColorPicker from '../ColorPicker';
 import AudioVisualizer from '../AudioVisualizer';
-import YouTubeAuthSettings from '../YouTubeAuthSettings';
+import AuthenticationPanel from '../AuthenticationPanel';
 import {
     getCacheInfo,
     clearAllData,
-    getSoundCloudClientId,
-    saveSoundCloudClientId,
     exportAllData,
     importAllData
 } from '../../services/api';
@@ -69,10 +68,11 @@ const YouTubeIcon = () => (
     </svg>
 );
 
-const CloudIcon = () => (
+
+const YandexMusicIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"
-            fill="currentColor" />
+        <circle cx="12" cy="12" r="10" fill="#FFD93D"/>
+        <path d="M12 6C8.686 6 6 8.686 6 12s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6zm2.293 6.707l-3.586 3.586a1 1 0 01-1.414-1.414L12.586 12 9.293 8.707a1 1 0 011.414-1.414l3.586 3.586a1 1 0 010 1.414z" fill="#333"/>
     </svg>
 );
 
@@ -93,13 +93,6 @@ const LogsIcon = () => (
     </svg>
 );
 
-const HelpIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" strokeWidth="2" />
-        <point x="12" y="17" fill="currentColor" />
-    </svg>
-);
 
 const CollectionIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -175,10 +168,6 @@ const SettingsPanel = ({
         loading: true
     });
 
-    const [soundcloudClientId, setSoundcloudClientId] = useState('');
-    const [isSavingClientId, setIsSavingClientId] = useState(false);
-    const [clientIdTooltipOpen, setClientIdTooltipOpen] = useState(false);
-    const [clientIdFeedback, setClientIdFeedback] = useState({ type: '', message: '' });
 
     const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
     const [isCacheClearing, setIsCacheClearing] = useState(false);
@@ -190,10 +179,6 @@ const SettingsPanel = ({
 
     useEffect(() => {
         setAvailableThemes(getAvailableThemes());
-        
-        // Принудительно отключаем горизонтальный режим
-        localStorage.setItem('horizontalMode', 'false');
-        document.documentElement.classList.remove('horizontal-mode');
     }, []);
 
     useEffect(() => {
@@ -225,19 +210,6 @@ const SettingsPanel = ({
         return () => clearInterval(interval);
     }, [cacheLastUpdated]);
 
-    useEffect(() => {
-        const loadClientId = async () => {
-            try {
-                const result = await getSoundCloudClientId();
-                if (result.is_set && result.client_id) {
-                    setSoundcloudClientId(result.client_id);
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке Client ID SoundCloud:', error);
-            }
-        };
-        loadClientId();
-    }, []);
 
     const handleThemeChange = (e) => {
         const newTheme = e.target.value;
@@ -280,41 +252,6 @@ const SettingsPanel = ({
         document.documentElement.style.setProperty('--visualizer-wave-gradient-enabled', newState ? '1' : '0');
     };
 
-    const handleSaveClientId = async () => {
-        if (!soundcloudClientId.trim()) {
-            setClientIdFeedback({
-                type: 'error',
-                message: 'Client ID не может быть пустым'
-            });
-            return;
-        }
-
-        setIsSavingClientId(true);
-        setClientIdFeedback({ type: '', message: '' });
-
-        try {
-            const result = await saveSoundCloudClientId(soundcloudClientId.trim());
-            if (result.success) {
-                setClientIdFeedback({
-                    type: 'success',
-                    message: 'Client ID успешно сохранен'
-                });
-                setTimeout(() => setClientIdFeedback({ type: '', message: '' }), 3000);
-            } else {
-                setClientIdFeedback({
-                    type: 'error',
-                    message: result.error || 'Ошибка при сохранении Client ID'
-                });
-            }
-        } catch (error) {
-            setClientIdFeedback({
-                type: 'error',
-                message: error.message || 'Ошибка при сохранении Client ID'
-            });
-        } finally {
-            setIsSavingClientId(false);
-        }
-    };
 
     const handleDownloadLogs = () => {
         try {
@@ -433,13 +370,7 @@ const SettingsPanel = ({
                     </a>
                 </div>
 
-                <div className="settings-section">
-                    <div className="settings-section-header">
-                        <YouTubeIcon />
-                        <h4>YouTube Авторизация</h4>
-                    </div>
-                    <YouTubeAuthSettings />
-                </div>
+                <AuthenticationPanel />
 
                 <div className="settings-section">
                     <div className="settings-section-header">
@@ -536,15 +467,21 @@ const SettingsPanel = ({
                             <div className="settings-item-description">Выберите расположение плеера и навигации</div>
                         </div>
                         <select
-                            value="false"
+                            value={localStorage.getItem('horizontalMode') === 'true' ? 'true' : 'false'}
                             onChange={(e) => {
-                                // Пока что только вертикальный режим доступен
+                                const isHorizontal = e.target.value === 'true';
+                                localStorage.setItem('horizontalMode', isHorizontal.toString());
+                                if (isHorizontal) {
+                                    document.documentElement.classList.add('horizontal-mode');
+                                } else {
+                                    document.documentElement.classList.remove('horizontal-mode');
+                                }
+                                window.dispatchEvent(new Event('storage'));
                             }}
                             className="modern-select"
-                            disabled={true}
                         >
                             <option value="false">Вертикальный</option>
-                            <option value="true" disabled>Горизонтальный (в разработке)</option>
+                            <option value="true">Горизонтальный</option>
                         </select>
                     </div>
 
@@ -626,73 +563,6 @@ const SettingsPanel = ({
                     </div>
                 </div>
 
-                <div className="settings-section">
-                    <div className="settings-section-header">
-                        <CloudIcon />
-                        <h4>SoundCloud</h4>
-                    </div>
-
-                    <div className="settings-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <div>
-                                <div className="settings-item-label">Client ID</div>
-                                <div className="settings-item-description">Ключ для доступа к SoundCloud API</div>
-                            </div>
-                            <div style={{ position: 'relative' }}>
-                                <button
-                                    className="modern-button secondary"
-                                    style={{ padding: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                    onMouseEnter={() => setClientIdTooltipOpen(true)}
-                                    onMouseLeave={() => setClientIdTooltipOpen(false)}
-                                    onClick={() => setClientIdTooltipOpen(!clientIdTooltipOpen)}
-                                >
-                                    <HelpIcon />
-                                </button>
-
-                                {clientIdTooltipOpen && (
-                                    <div className="help-tooltip">
-                                        <h4>Как получить SoundCloud Client ID:</h4>
-                                        <ol>
-                                            <li>Откройте <a href="https://soundcloud.com" target="_blank" rel="noopener noreferrer">SoundCloud.com</a></li>
-                                            <li>Войдите в свой аккаунт</li>
-                                            <li>Нажмите <strong>F12</strong> (инструменты разработчика)</li>
-                                            <li>Перейдите на вкладку <strong>Network</strong></li>
-                                            <li>В поиске введите <code>client_id</code></li>
-                                            <li>Обновите страницу (F5)</li>
-                                            <li>Найдите запрос к API с параметром <code>client_id</code></li>
-                                            <li>Скопируйте значение после <code>client_id=</code></li>
-                                        </ol>
-                                        <p><strong>Пример:</strong> <code>iZIs9mchVcX5lhVRyQGGAYlNPVldzAoX</code></p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <input
-                            type="text"
-                            className="modern-input"
-                            value={soundcloudClientId}
-                            onChange={(e) => setSoundcloudClientId(e.target.value)}
-                            placeholder="Введите SoundCloud Client ID"
-                            style={{ marginBottom: '8px' }}
-                        />
-
-                        {clientIdFeedback.message && (
-                            <div className={`feedback-message ${clientIdFeedback.type}`}>
-                                {clientIdFeedback.message}
-                            </div>
-                        )}
-
-                        <button
-                            className="modern-button"
-                            onClick={handleSaveClientId}
-                            disabled={isSavingClientId}
-                            style={{ alignSelf: 'flex-start', marginTop: '8px' }}
-                        >
-                            {isSavingClientId ? 'Сохранение...' : 'Сохранить'}
-                        </button>
-                    </div>
-                </div>
 
                 <div className="settings-section">
                     <div className="settings-section-header">

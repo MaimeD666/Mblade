@@ -107,8 +107,10 @@ const AddToPlaylistModal = ({ isOpen, track, playlists, onClose, onAddToPlaylist
   );
 };
 
-const SearchBar = ({ query, onQueryChange, onSearch, searchType = 'tracks' }) => {
+const SearchBar = ({ query, onQueryChange, onSearch, searchType = 'tracks', selectedServices, onServicesChange }) => {
   const [isSearchButtonActive, setIsSearchButtonActive] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -127,9 +129,88 @@ const SearchBar = ({ query, onQueryChange, onSearch, searchType = 'tracks' }) =>
     }
   };
 
+  const handleServiceToggle = (service) => {
+    const updatedServices = selectedServices.includes(service)
+      ? selectedServices.filter(s => s !== service)
+      : [...selectedServices, service];
+    onServicesChange(updatedServices);
+  };
+
+  const handleAllServicesToggle = () => {
+    const allServices = ['soundcloud', 'youtube', 'yandex_music'];
+    const isAllSelected = allServices.every(service => selectedServices.includes(service));
+    onServicesChange(isAllSelected ? [] : allServices);
+  };
+
+  // Закрытие меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="search-bar">
       <div className={`overlap-2 ${isSearchButtonActive ? 'searching' : ''}`}>
+        {searchType === 'tracks' && (
+          <div className="services-menu-container" ref={menuRef}>
+            <button
+              type="button"
+              className="services-menu-button"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+              </svg>
+            </button>
+            {isMenuOpen && (
+              <div className="services-menu">
+                <div className="services-menu-title">Выберите сервисы:</div>
+                <div className="service-option" onClick={handleAllServicesToggle}>
+                  <div className={`service-checkbox ${
+                    ['soundcloud', 'youtube', 'yandex_music'].every(service => selectedServices.includes(service)) ? 'checked' : ''
+                  }`} />
+                  <span>Все сервисы</span>
+                </div>
+                <div className="service-option" onClick={() => handleServiceToggle('soundcloud')}>
+                  <div className={`service-checkbox ${selectedServices.includes('soundcloud') ? 'checked' : ''}`} />
+                  <div className="service-icon soundcloud">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M7 17.939h-1v-8.068c.308-.231.639-.429 1-.566v8.634zm3 0h1v-9.224c-.229.265-.443.548-.621.857l-.379-.184v8.551zm-2 0h1v-8.848c-.508-.079-.623-.05-1-.01v8.858zm-4 0h1v-7.02c-.312.458-.555.971-.692 1.535l-.308-.182v5.667zm-3-5.25c-.606.547-1 1.354-1 2.268 0 .914.394 1.721 1 2.268v-4.536zm18.879-.671c-.204-2.837-2.404-5.079-5.117-5.079-1.022 0-1.964.328-2.762.877v10.123h9.089c1.607 0 2.911-1.393 2.911-3.106 0-2.233-2.168-3.772-4.121-2.815zm-16.879-.027c-.302-.024-.526-.03-1 .122v5.689c.446.143.636.138 1 .138v-5.949z" />
+                    </svg>
+                  </div>
+                  <span>SoundCloud</span>
+                </div>
+                <div className="service-option" onClick={() => handleServiceToggle('youtube')}>
+                  <div className={`service-checkbox ${selectedServices.includes('youtube') ? 'checked' : ''}`} />
+                  <div className="service-icon youtube">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                  </div>
+                  <span>YouTube Music</span>
+                </div>
+                <div className="service-option" onClick={() => handleServiceToggle('yandex_music')}>
+                  <div className={`service-checkbox ${selectedServices.includes('yandex_music') ? 'checked' : ''}`} />
+                  <div className="service-icon yandex-music">
+                    <svg viewBox="0 0 48 48" fill="currentColor">
+                      <path fill="#212121" d="M24.001,44.001c11.045,0,20-8.955,20-20s-8.955-20-20-20c-11.045,0-20,8.955-20,20S12.956,44.001,24.001,44.001z"></path>
+                      <path fill="#fcbe2d" d="M39.2,20.019l-0.129-0.607l-5.097-0.892l2.968-4.021L36.6,14.104l-4.364,2.104l0.552-5.573l-0.447-0.261l-2.655,4.52l-2.971-6.728h-0.524l0.709,6.491l-7.492-6.019l-0.631,0.184l5.757,7.281l-11.407-3.812l-0.527,0.58L22.8,18.705L8.739,19.887l-0.157,0.868l14.612,1.601L10.999,32.504l0.527,0.708l14.508-7.937l-2.864,13.984h0.868l5.569-13.168L33,36.392l0.603-0.473L32.212,25.46l5.28,6.019l0.341-0.555l-4.045-7.463l5.649,2.103l0.053-0.631l-5.072-3.76L39.2,20.019z"></path>
+                    </svg>
+                  </div>
+                  <span>Яндекс.Музыка</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         <input
           type="text"
           className="search-input"
@@ -137,6 +218,7 @@ const SearchBar = ({ query, onQueryChange, onSearch, searchType = 'tracks' }) =>
           onChange={(e) => onQueryChange(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={searchType === 'tracks' ? 'Поиск трека' : 'Поиск плейлистов'}
+          style={{ paddingLeft: searchType === 'tracks' ? '75px' : '33px' }}
         />
         <button
           type="button"
@@ -183,33 +265,35 @@ const SearchTab = ({
   setPlaylists = () => { },
   savePlaylistsToServer = () => { }
 }) => {
-  const [currentRowIndex, setCurrentRowIndex] = useState(0);
-  const [platformFilter, setPlatformFilter] = useState('all');
   const [searchType, setSearchType] = useState('tracks'); // 'tracks' или 'playlists'
+  const [selectedServices, setSelectedServices] = useState(['soundcloud', 'youtube', 'yandex_music']);
   const listRef = useRef(null);
-  const rowHeight = 230;
   const [addToPlaylistModal, setAddToPlaylistModal] = useState({ isOpen: false, track: null });
   const [playlistResults, setPlaylistResults] = useState([]);
   const [isSearchingPlaylists, setIsSearchingPlaylists] = useState(false);
   const [playlistPreviewModal, setPlaylistPreviewModal] = useState({ isOpen: false, playlist: null });
 
-  const filteredResults = platformFilter === 'all'
+  const filteredResults = selectedServices.length === 0 || selectedServices.includes('all')
     ? searchResults
-    : searchResults.filter(track => track.platform === platformFilter);
+    : searchResults.filter(track => selectedServices.includes(track.platform));
 
   const sortedResults = [...filteredResults].sort((a, b) => {
-    if (a.platform === 'soundcloud' && b.platform !== 'soundcloud') return -1;
-    if (a.platform !== 'soundcloud' && b.platform === 'soundcloud') return 1;
+    // Порядок приоритета: SoundCloud > Yandex Music > YouTube > VK Music
+    const platformPriority = {
+      'soundcloud': 0,
+      'yandex_music': 1,
+      'youtube': 2,
+      'vkmusic': 3
+    };
 
-    if (a.platform === 'vkmusic' && b.platform === 'youtube') return -1;
-    if (a.platform === 'youtube' && b.platform === 'vkmusic') return 1;
+    const priorityA = platformPriority[a.platform] ?? 999;
+    const priorityB = platformPriority[b.platform] ?? 999;
 
-    return 0;
+    return priorityA - priorityB;
   });
 
-  const handleFilterChange = (platform) => {
-    setPlatformFilter(platform);
-    setCurrentRowIndex(0);
+  const handleServicesChange = (services) => {
+    setSelectedServices(services);
   };
 
   const isTrackUnavailable = (track) => {
@@ -223,40 +307,45 @@ const SearchTab = ({
     return likedTracks.some(t => t.id === track.id && t.platform === track.platform);
   };
 
-  const handleWheel = (e) => {
-    // Только для треков, не для плейлистов
-    if (searchType !== 'tracks') return;
-    
-    e.preventDefault();
+  const formatDuration = (seconds) => {
+    if (!seconds || !isFinite(seconds)) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
-    const totalRows = Math.ceil(sortedResults.length / 3);
-    const maxRowIndex = Math.max(0, totalRows - 3);
-
-    if (e.deltaY > 0 && currentRowIndex < maxRowIndex) {
-      setCurrentRowIndex(prev => prev + 1);
-    } else if (e.deltaY < 0 && currentRowIndex > 0) {
-      setCurrentRowIndex(prev => prev - 1);
+  const getPlatformIcon = (platform) => {
+    switch (platform) {
+      case 'youtube':
+        return (
+          <svg viewBox="0 0 24 24" fill="currentColor" className="platform-icon-svg youtube">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+          </svg>
+        );
+      case 'soundcloud':
+        return (
+          <svg viewBox="0 0 24 24" fill="currentColor" className="platform-icon-svg soundcloud">
+            <path d="M7 17.939h-1v-8.068c.308-.231.639-.429 1-.566v8.634zm3 0h1v-9.224c-.229.265-.443.548-.621.857l-.379-.184v8.551zm-2 0h1v-8.848c-.508-.079-.623-.05-1-.01v8.858zm-4 0h1v-7.02c-.312.458-.555.971-.692 1.535l-.308-.182v5.667zm-3-5.25c-.606.547-1 1.354-1 2.268 0 .914.394 1.721 1 2.268v-4.536zm18.879-.671c-.204-2.837-2.404-5.079-5.117-5.079-1.022 0-1.964.328-2.762.877v10.123h9.089c1.607 0 2.911-1.393 2.911-3.106 0-2.233-2.168-3.772-4.121-2.815zm-16.879-.027c-.302-.024-.526-.03-1 .122v5.689c.446.143.636.138 1 .138v-5.949z" />
+          </svg>
+        );
+      case 'yandex_music':
+        return (
+          <svg viewBox="0 0 48 48" fill="currentColor" className="platform-icon-svg yandex-music">
+            <path fill="#212121" d="M24.001,44.001c11.045,0,20-8.955,20-20s-8.955-20-20-20c-11.045,0-20,8.955-20,20S12.956,44.001,24.001,44.001z"></path>
+            <path fill="#fcbe2d" d="M39.2,20.019l-0.129-0.607l-5.097-0.892l2.968-4.021L36.6,14.104l-4.364,2.104l0.552-5.573l-0.447-0.261l-2.655,4.52l-2.971-6.728h-0.524l0.709,6.491l-7.492-6.019l-0.631,0.184l5.757,7.281l-11.407-3.812l-0.527,0.58L22.8,18.705L8.739,19.887l-0.157,0.868l14.612,1.601L10.999,32.504l0.527,0.708l14.508-7.937l-2.864,13.984h0.868l5.569-13.168L33,36.392l0.603-0.473L32.212,25.46l5.28,6.019l0.341-0.555l-4.045-7.463l5.649,2.103l0.053-0.631l-5.072-3.76L39.2,20.019z"></path>
+          </svg>
+        );
+      case 'vkmusic':
+        return (
+          <svg viewBox="0 0 24 24" fill="currentColor" className="platform-icon-svg vkmusic">
+            <path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm3.692 17.123h-1.744c-.66 0-.864-.525-2.05-1.727-1.033-1-1.49-1.135-1.744-1.135-.356 0-.458.102-.458.593v1.575c0 .424-.135.678-1.253.678-1.846 0-3.896-1.118-5.335-3.202C4.624 10.857 4 8.113 4 7.676c0-.254.102-.491.593-.491h1.744c.44 0 .61.203.78.677.847 2.472 2.27 4.642 2.856 4.642.22 0 .322-.102.322-.66V8.926c-.068-1.186-.695-1.287-.695-1.71 0-.204.17-.407.44-.407h2.743c.373 0 .508.203.508.643v3.473c0 .372.17.508.271.508.22 0 .407-.136.813-.542 1.254-1.406 2.15-3.574 2.15-3.574.119-.254.373-.491.712-.491h1.744c.525 0 .644.27.525.643-.22 1.017-2.354 4.031-2.354 4.031-.186.305-.254.44 0 .78.186.254.796.779 1.203 1.253.745.847 1.32 1.558 1.473 2.05.17.49-.085.745-.576.745z" />
+          </svg>
+        );
+      default:
+        return null;
     }
   };
 
-  useEffect(() => {
-    const listElement = listRef.current;
-    if (listElement && searchType === 'tracks') {
-      listElement.addEventListener('wheel', handleWheel, { passive: false });
-      return () => {
-        listElement.removeEventListener('wheel', handleWheel);
-      };
-    }
-  }, [currentRowIndex, sortedResults.length, searchType]);
-
-  useEffect(() => {
-    setCurrentRowIndex(0);
-  }, [searchResults]);
-
-  const trackRows = [];
-  for (let i = 0; i < sortedResults.length; i += 3) {
-    trackRows.push(sortedResults.slice(i, i + 3));
-  }
 
   const handleTrackClick = (track) => {
     if (isTrackUnavailable(track)) {
@@ -275,10 +364,11 @@ const SearchTab = ({
     setAddToPlaylistModal({ isOpen: true, track });
   };
 
-  // Обработчик поиска с учетом типа поиска
+  // Обработчик поиска с учетом типа поиска и выбранных сервисов
   const handleSearchSubmit = async (query) => {
     if (searchType === 'tracks') {
-      onSearch(query);
+      // Передаем выбранные сервисы в функцию поиска
+      onSearch(query, selectedServices);
     } else {
       setIsSearchingPlaylists(true);
       try {
@@ -354,6 +444,8 @@ const SearchTab = ({
         onQueryChange={onQueryChange}
         onSearch={handleSearchSubmit}
         searchType={searchType}
+        selectedServices={selectedServices}
+        onServicesChange={handleServicesChange}
       />
 
       <div className="search-content-container">
@@ -373,38 +465,6 @@ const SearchTab = ({
         </div>
         
         <div className="search-content">
-          {searchType === 'tracks' && wasSearched && searchResults.length > 0 && (
-            <div className="platform-filter">
-              <button
-                className={`filter-button ${platformFilter === 'all' ? 'active' : ''}`}
-                onClick={() => handleFilterChange('all')}
-              >
-                Все треки
-              </button>
-              <button
-                className={`filter-button ${platformFilter === 'soundcloud' ? 'active' : ''}`}
-                onClick={() => handleFilterChange('soundcloud')}
-              >
-                SoundCloud
-              </button>
-              <button
-                className={`filter-button ${platformFilter === 'youtube' ? 'active' : ''}`}
-                onClick={() => handleFilterChange('youtube')}
-              >
-                YouTube
-              </button>
-              {searchResults.some(track => track.platform === 'vkmusic') && (
-                <button
-                  className={`filter-button ${platformFilter === 'vkmusic' ? 'active' : ''}`}
-                  onClick={() => handleFilterChange('vkmusic')}
-                >
-                  VK Music
-                </button>
-              )}
-            </div>
-          )}
-
-
           <div className="track-cards-list" ref={listRef}>
             {searchType === 'tracks' ? (
               // Результаты поиска треков
@@ -423,36 +483,82 @@ const SearchTab = ({
                     <p>По вашему запросу ничего не найдено</p>
                   </div>
                 ) : (
-                  <div
-                    className="tracks-container"
-                    style={{ transform: `translateY(-${currentRowIndex * rowHeight}px)` }}
-                  >
-                    {trackRows.map((row, rowIndex) => {
-                      const isVisible = rowIndex >= currentRowIndex && rowIndex < currentRowIndex + 3;
+                  <div className="tracks-list">
+                    {sortedResults.map((track) => {
+                      const trackIsUnavailable = isTrackUnavailable(track);
+                      const trackIsLiked = isTrackLiked(track);
+                      const isCurrentTrack = currentTrack && 
+                        currentTrack.id === track.id && 
+                        currentTrack.platform === track.platform;
 
                       return (
-                        <div
-                          key={`row-${rowIndex}`}
-                          className="track-row"
-                          style={{ opacity: isVisible ? 1 : 0 }}
+                        <div 
+                          key={`${track.platform}-${track.id}`} 
+                          className={`track-list-item ${trackIsUnavailable ? 'unavailable' : ''} ${isCurrentTrack ? 'playing' : ''}`}
+                          onClick={() => handleTrackClick(track)}
                         >
-                          {row.map((track) => {
-                            const trackIsUnavailable = isTrackUnavailable(track);
-                            const trackIsLiked = isTrackLiked(track);
+                          <div className="track-thumbnail">
+                            {track.thumbnail ? (
+                              <img src={track.thumbnail} alt={track.title} />
+                            ) : (
+                              <div className="no-thumbnail">♫</div>
+                            )}
+                            <div className="play-overlay">
+                              {isCurrentTrack && isPlaying ? (
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M6 19H10V5H6V19ZM14 5V19H18V5H14Z" />
+                                </svg>
+                              ) : (
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
 
-                            return (
-                              <div key={`${track.platform}-${track.id}`} className="track-item">
-                                <Component
-                                  track={track}
-                                  onClick={() => handleTrackClick(track)}
-                                  isUnavailable={trackIsUnavailable}
-                                  isLiked={trackIsLiked}
-                                  onLike={() => handleLikeTrack(track)}
-                                  onAddToPlaylist={() => handleAddToPlaylist(track)}
+                          <div className="track-info">
+                            <div className="track-title">{track.title}</div>
+                            <div className="track-author">{track.uploader || track.artist}</div>
+                          </div>
+
+                          <div className="track-metadata">
+                            <div className="platform-icon">
+                              {getPlatformIcon(track.platform)}
+                            </div>
+                            {track.duration && (
+                              <div className="track-duration">{formatDuration(track.duration)}</div>
+                            )}
+                          </div>
+
+                          <div className="track-actions">
+                            <button
+                              className={`action-button like-button ${trackIsLiked ? 'active' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLikeTrack(track);
+                              }}
+                              title="Добавить в избранное"
+                            >
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d={trackIsLiked
+                                  ? "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                                  : "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"}
                                 />
-                              </div>
-                            );
-                          })}
+                              </svg>
+                            </button>
+                            <button
+                              className="action-button playlist-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToPlaylist(track);
+                              }}
+                              title="Добавить в плейлист"
+                            >
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
