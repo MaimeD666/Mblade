@@ -69,7 +69,7 @@ cd server && pip install -r requirements.txt && cd ..
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 cd server && python app.py >backend.log 2>&1 &  # run in background
-cd .. && npm start 
+cd .. && npm start
 ```
 
 ## Project Structure
