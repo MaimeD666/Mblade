@@ -53,7 +53,7 @@ Download the latest release from the [Releases](https://github.com/MaimeD666/Mbl
 
 1. Clone repository:
 ```bash
-git clone https://github.com/MaimeD666/Mblade.git
+git clone git@github.com:MaimeD666/Mblade.git  # use SSH
 cd Mblade
 ```
 
