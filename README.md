@@ -53,7 +53,7 @@ Download the latest release from the [Releases](https://github.com/MaimeD666/Mbl
 
 1. Clone repository:
 ```bash
-git clone https://github.com/MaimeD666/Mblade.git
+git clone git@github.com:MaimeD666/Mblade.git  # use SSH
 cd Mblade
 ```
 
@@ -66,10 +66,10 @@ cd server && pip install -r requirements.txt && cd ..
 3. Development mode:
 ```bash
 # Terminal 1: Backend server
-cd server && python app.py
-
-# Terminal 2: Frontend
-npm start
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+cd server && python app.py >backend.log 2>&1 &  # run in background
+cd .. && npm start
 ```
 
 ## Project Structure
